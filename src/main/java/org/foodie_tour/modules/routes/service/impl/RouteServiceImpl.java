@@ -39,12 +39,10 @@ public class RouteServiceImpl implements RouteService {
         route.setTour(tour);
         route.setCreatedAt(LocalDateTime.now());
 
-        if (route.getRouteDetails() != null) {
-            route.getRouteDetails().forEach(routeDetail -> {
-                routeDetail.setRoute(route);
-                routeDetail.setCreatedAt(LocalDateTime.now());
-            });
+        if (route.getRouteCheckpoints() != null) {
+            route.getRouteCheckpoints().forEach(checkpoint -> checkpoint.setRoute(route));
         }
+
         routeRepository.save(route);
         return routeMapper.toResponse(route);
     }
@@ -87,12 +85,6 @@ public class RouteServiceImpl implements RouteService {
         route.setUpdatedAt(LocalDateTime.now());
         route.setTour(tour);
 
-        if (route.getRouteDetails() != null) {
-            route.getRouteDetails().forEach(routeDetail -> {
-                routeDetail.setRoute(route);
-                routeDetail.setUpdatedAt(LocalDateTime.now());
-            });
-        }
         routeRepository.save(route);
         return routeMapper.toResponse(route);
     }

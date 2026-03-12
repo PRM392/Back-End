@@ -51,7 +51,6 @@ public class Route {
     @OneToMany(mappedBy = "route", fetch = FetchType.LAZY)
     private List<Schedule> schedules;
 
-    @OneToMany(mappedBy = "route", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JsonManagedReference
-    private List<RouteDetail> routeDetails;
+    @OneToMany(mappedBy = "route", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<RouteCheckpoint> routeCheckpoints;
 }
