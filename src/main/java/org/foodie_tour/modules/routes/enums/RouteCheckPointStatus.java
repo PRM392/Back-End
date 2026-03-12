@@ -1,8 +1,7 @@
 package org.foodie_tour.modules.routes.enums;
 
-public enum RouteDetailStatus {
+public enum RouteCheckPointStatus {
     ACTIVE,
     INACTIVE,
-    DELETED,
-    DRAFT
+    DELETED
 }
