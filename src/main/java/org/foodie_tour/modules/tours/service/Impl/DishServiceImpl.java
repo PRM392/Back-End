@@ -3,7 +3,9 @@ package org.foodie_tour.modules.tours.service.Impl;
 import lombok.RequiredArgsConstructor;
 import org.foodie_tour.common.exception.DuplicateResourceException;
 import org.foodie_tour.common.exception.ResourceNotFoundException;
+import org.foodie_tour.modules.aws.s3.service.S3Service;
 import org.foodie_tour.modules.images.entity.Image;
+import org.foodie_tour.modules.images.enums.ImageStatus;
 import org.foodie_tour.modules.images.repository.ImageRepository;
 import org.foodie_tour.modules.tours.dto.request.DishRequest;
 import org.foodie_tour.modules.tours.dto.response.DishResponse;
@@ -16,8 +18,11 @@ import org.foodie_tour.modules.tours.repository.TourRepository;
 import org.foodie_tour.modules.tours.service.DishService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -27,10 +32,11 @@ public class DishServiceImpl implements DishService {
     private final DishMapper dishMapper;
     private final TourRepository tourRepository;
     private final ImageRepository imageRepository;
+    private final S3Service s3Service;
 
     @Override
     @Transactional
-    public DishResponse createDish(DishRequest dishRequest) {
+    public DishResponse createDish(DishRequest dishRequest, List<MultipartFile> files) throws IOException {
         if (dishRepository.existsByDishName(dishRequest.getDishName())) {
             throw new DuplicateResourceException("Trùng tên món ăn");
         }
@@ -41,15 +47,26 @@ public class DishServiceImpl implements DishService {
         Dish dish = dishMapper.toEntity(dishRequest);
         dish.setTour(tour);
         dish.setCreatedAt(LocalDateTime.now());
-        dish = dishRepository.save(dish);
+        dish.setDishStatus(DishStatus.ACTIVE);
+        final Dish savedDish = dishRepository.save(dish);
 
-        if (dishRequest.getImageId() != null) {
-            final Dish savedDish = dish;
-            Image image = imageRepository.findById(dishRequest.getImageId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Ảnh không tồn tại"));
-        image.setDish(savedDish);
-        dish.setIsPrimary(dishRequest.getIsPrimary());
-        imageRepository.save(image);
+        if (files != null && !files.isEmpty()) {
+            List<Image> dishImages = new ArrayList<>();
+            for (MultipartFile file : files) {
+                String publicUrl = s3Service.uploadFile(file);
+
+                Image img = Image.builder()
+                        .imageUrl(publicUrl)
+                        .imageStatus(ImageStatus.ACTIVE)
+                        .dish(savedDish)
+                        .createdAt(LocalDateTime.now())
+                        .updatedAt(LocalDateTime.now())
+                        .build();
+
+                dishImages.add(imageRepository.save(img));
+            }
+            dish.setIsPrimary(dishRequest.getIsPrimary());
+            savedDish.setImages(dishImages);
         }
         return dishMapper.toResponse(dish);
     }
