@@ -223,6 +223,8 @@ public class BookingServiceImpl implements BookingService {
             throw new InvalidateDataException("Mã xác nhận không hợp lệ");
         }
 
+        otpCodeRepository.delete(otpEntity);
+
         LocalDateTime departureTime = scheduleRepository.getDepartureTime(request.getScheduleId())
                 .orElseThrow(() -> new ResourceNotFoundException("Lịch khởi hành không tồn tại"));
 
