@@ -2,10 +2,12 @@ package org.foodie_tour.modules.images.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.foodie_tour.modules.feedback.entity.Feedback;
 import org.foodie_tour.modules.images.enums.ImageStatus;
+import org.foodie_tour.modules.routes.entity.CheckPoint;
 import org.foodie_tour.modules.tours.entity.Dish;
 
 import java.time.LocalDateTime;
@@ -16,6 +18,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "images")
+@Builder
 public class Image {
 
     @Id
@@ -46,6 +49,9 @@ public class Image {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "feedback_id")
     private Feedback feedback;
+
+    @OneToMany(mappedBy = "image", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<CheckPointImage> checkPointImages;
 
     @OneToMany(mappedBy = "image", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<TourImage> tourImages;
