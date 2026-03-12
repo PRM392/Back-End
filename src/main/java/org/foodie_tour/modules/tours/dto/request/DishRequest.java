@@ -20,5 +20,4 @@ public class DishRequest {
     private DishType dishType;
     private DishStatus dishStatus;
     private LocalDateTime createdAt;
-    private Long imageId;
 }

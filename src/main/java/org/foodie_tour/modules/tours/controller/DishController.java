@@ -7,9 +7,12 @@ import org.foodie_tour.modules.tours.dto.response.DishResponse;
 import org.foodie_tour.modules.tours.enums.DishStatus;
 import org.foodie_tour.modules.tours.service.DishService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -19,9 +22,12 @@ public class DishController {
 
     private final DishService dishService;
 
-    @PostMapping("")
-    public ResponseEntity<DishResponse> createDish(@Valid @RequestBody DishRequest dishRequest) {
-        DishResponse response = dishService.createDish(dishRequest);
+    @PostMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<DishResponse> createDish(
+            @RequestPart("request") @Valid DishRequest dishRequest,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files
+    ) throws IOException {
+        DishResponse response = dishService.createDish(dishRequest, files);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
