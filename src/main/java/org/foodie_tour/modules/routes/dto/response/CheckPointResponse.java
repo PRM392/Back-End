@@ -14,7 +14,6 @@ public class CheckPointResponse {
     private Long tourId;
     private String locationName;
     private String description;
-    private List<String> imageUrls;
     private int durationAtLocation;
     private CheckPointType type;
 }

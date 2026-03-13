@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import org.foodie_tour.modules.images.entity.CheckPointImage;
 import org.foodie_tour.modules.routes.enums.CheckPointType;
 import org.foodie_tour.modules.tours.entity.Tour;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -39,9 +41,11 @@ public class CheckPoint {
     @Enumerated(EnumType.STRING)
     private CheckPointType type;
 
+    @CreationTimestamp
     @Column(name = "created_at")
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 
+    @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
@@ -49,6 +53,6 @@ public class CheckPoint {
     @JoinColumn(name = "tour_id")
     private Tour tour;
 
-    @OneToMany(mappedBy = "checkpoint", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<CheckPointImage> checkpointImages;
+    @OneToMany(mappedBy = "checkpoint", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    private List<CheckPointImage> checkpointImages = new java.util.ArrayList<>();
 }
