@@ -18,9 +18,11 @@ import org.foodie_tour.modules.tours.entity.Tour;
 import org.foodie_tour.modules.tours.repository.TourRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,7 +39,7 @@ public class CheckPointServiceImpl implements CheckPointService {
 
     @Override
     @Transactional
-    public CheckPointResponse createCheckPoint(CheckPointRequest checkPointRequest, List<MultipartFile> files) throws IOException {
+    public CheckPointResponse createCheckPoint(CheckPointRequest checkPointRequest, List<MultipartFile> files, Integer primaryIndex) throws IOException {
         Tour tour = tourRepository.findById(checkPointRequest.getTourId())
                 .orElseThrow(() -> new ResourceNotFoundException("Tour không tồn tại"));
 
@@ -45,25 +47,43 @@ public class CheckPointServiceImpl implements CheckPointService {
         checkPoint.setTour(tour);
         CheckPoint saved = checkPointRepository.save(checkPoint);
 
-        if (files != null && !files.isEmpty()) {
+        if (!CollectionUtils.isEmpty(files)) {
             List<CheckPointImage> cpImages = new ArrayList<>();
-            for (MultipartFile file : files) {
-                String publicUrl = s3Service.uploadFile(file);
+            for (int i = 0; i < files.size(); i++) {
+                String publicUrl = s3Service.uploadFile(files.get(i));
 
-                Image img = new Image();
-                img.setImageUrl(publicUrl);
-                img.setImageStatus(ImageStatus.ACTIVE);
+                Image img = Image.builder()
+                        .imageUrl(publicUrl)
+                        .imageStatus(ImageStatus.ACTIVE)
+                        .createdAt(LocalDateTime.now())
+                        .updatedAt(LocalDateTime.now())
+                        .build();
                 img = imageRepository.save(img);
 
-                cpImages.add(CheckPointImage.builder()
+                CheckPointImage cpImg = CheckPointImage.builder()
                         .checkpoint(saved)
                         .image(img)
                         .status(CheckPointImageStatus.ACTIVE)
-                        .build());
+                        .isPrimary(primaryIndex != null && primaryIndex == i)
+                        .createdAt(LocalDateTime.now())
+                        .updatedAt(LocalDateTime.now())
+                        .build();
+                cpImages.add(cpImg);
             }
             saved.setCheckpointImages(cpImages);
             checkPointRepository.save(saved);
         }
         return checkPointMapper.toResponse(saved);
+    }
+
+    @Override
+    public List<CheckPointResponse> getCheckpointsByTourId(Long tourId) {
+        Tour tour = tourRepository.findById(tourId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tour không tồn tại"));
+
+        List<CheckPoint> checkPoints = checkPointRepository.findByTour_TourId(tourId);
+        return checkPoints.stream()
+                .map(checkPointMapper::toResponse)
+                .toList();
     }
 }

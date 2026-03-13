@@ -9,5 +9,6 @@ import java.util.List;
 
 public interface CheckPointService {
 
-    CheckPointResponse createCheckPoint(CheckPointRequest checkPointRequest, List<MultipartFile> files) throws IOException;
+    CheckPointResponse createCheckPoint(CheckPointRequest checkPointRequest, List<MultipartFile> files, Integer primaryIndex) throws IOException;
+    List<CheckPointResponse> getCheckpointsByTourId(Long tourId);
 }

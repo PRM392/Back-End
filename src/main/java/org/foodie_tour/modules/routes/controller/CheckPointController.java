@@ -7,10 +7,7 @@ import org.foodie_tour.modules.routes.service.CheckPointService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -24,11 +21,20 @@ public class CheckPointController {
     private final CheckPointService checkPointService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<CheckPointResponse> create(
+    public ResponseEntity<CheckPointResponse> createCheckPoint(
             @RequestPart("request") CheckPointRequest request,
-            @RequestPart(value = "files", required = false) List<MultipartFile> files
+            @RequestPart(value = "files", required = false) List<MultipartFile> files,
+            @RequestParam(value = "primaryIndex", required = false) Integer primaryIndex //up bao nhiêu tấm, muốn tấm nào hiển thị chính thì truyền số tương ứng
     ) throws IOException {
-        CheckPointResponse response = checkPointService.createCheckPoint(request, files);
+        CheckPointResponse response = checkPointService.createCheckPoint(request, files, primaryIndex);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping("/tour/{tourId}")
+    public ResponseEntity<List<CheckPointResponse>> getCheckpointByTourId(
+            @PathVariable Long tourId
+    ) {
+        List<CheckPointResponse> responses = checkPointService.getCheckpointsByTourId(tourId);
+        return ResponseEntity.ok(responses);
     }
 }

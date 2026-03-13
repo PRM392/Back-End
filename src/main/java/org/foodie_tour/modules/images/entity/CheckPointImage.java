@@ -1,14 +1,11 @@
 package org.foodie_tour.modules.images.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.foodie_tour.modules.images.enums.CheckPointImageStatus;
 import org.foodie_tour.modules.routes.entity.CheckPoint;
-import org.foodie_tour.modules.tours.enums.TourStatus;
-
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
@@ -18,7 +15,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Builder
 public class CheckPointImage {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "checkpoint_image_id")
@@ -32,13 +28,22 @@ public class CheckPointImage {
     @JoinColumn(name = "image_id")
     private Image image;
 
-    @Column(name = "checkpoint_image_status")
+    @Builder.Default
+    @Column(name = "is_primary")
+    private Boolean isPrimary = false;
+
+    @Builder.Default
+    @Column(name = "status")
     @Enumerated(EnumType.STRING)
-    private CheckPointImageStatus status;
+    private CheckPointImageStatus status = CheckPointImageStatus.ACTIVE;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    @Builder.Default
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Builder.Default
+    @UpdateTimestamp
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private LocalDateTime updatedAt = LocalDateTime.now();
 }

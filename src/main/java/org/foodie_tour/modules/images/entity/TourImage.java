@@ -2,11 +2,14 @@ package org.foodie_tour.modules.images.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import org.foodie_tour.modules.images.enums.TourImageStatus;
 import org.foodie_tour.modules.tours.entity.Tour;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -15,6 +18,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "tour_images")
+@Builder
 public class TourImage {
 
     @Id
@@ -22,8 +26,9 @@ public class TourImage {
     @Column(name = "tour_image_id")
     private Long tourImageId;
 
+    @Builder.Default
     @Column(name = "is_primary")
-    private Boolean isPrimary;
+    private Boolean isPrimary = false;
 
     @Column(name = "image_url")
     private String imageUrl;
@@ -31,15 +36,18 @@ public class TourImage {
     @Column(name = "display_order")
     private int displayOrder;
 
+    @Builder.Default
     @Column(name = "tour_image_status")
     @Enumerated(EnumType.STRING)
-    private TourImageStatus tourImageStatus;
+    private TourImageStatus tourImageStatus = TourImageStatus.ACTIVE;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
 
+    @UpdateTimestamp
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    private LocalDateTime updatedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "image_id")

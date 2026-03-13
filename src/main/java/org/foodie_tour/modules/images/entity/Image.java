@@ -1,15 +1,12 @@
 package org.foodie_tour.modules.images.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.foodie_tour.modules.feedback.entity.Feedback;
 import org.foodie_tour.modules.images.enums.ImageStatus;
-import org.foodie_tour.modules.routes.entity.CheckPoint;
 import org.foodie_tour.modules.tours.entity.Dish;
-
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -20,7 +17,6 @@ import java.util.List;
 @Table(name = "images")
 @Builder
 public class Image {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "image_id", nullable = false)
@@ -32,13 +28,18 @@ public class Image {
     @Column(name = "image_description")
     private String imageDescription;
 
+    @Builder.Default
     @Column(name = "image_status")
     @Enumerated(EnumType.STRING)
-    private ImageStatus imageStatus;
+    private ImageStatus imageStatus = ImageStatus.ACTIVE;
 
-    @Column(name = "created_at")
+    @Builder.Default
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Builder.Default
+    @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
 

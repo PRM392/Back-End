@@ -18,8 +18,6 @@ public interface CheckPointMapper {
     CheckPoint toEntity(CheckPointRequest request);
 
     @Mapping(target = "tourId", source = "tour.tourId")
-    @Mapping(target = "imageUrls", expression = "java(entity.getCheckpointImages() != null ? " +
-            "entity.getCheckpointImages().stream().map(ci -> ci.getImage().getImageUrl()).toList() : new java.util.ArrayList<>())")
     CheckPointResponse toResponse(CheckPoint entity);
 
     @Mapping(target = "checkpointId", ignore = true)
