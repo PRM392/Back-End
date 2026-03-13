@@ -66,6 +66,6 @@ public class Tour {
     @OneToMany(mappedBy = "tour", cascade = CascadeType.ALL)
     private List<Route> routes;
 
-    @OneToMany(mappedBy = "tour")
+    @OneToMany(mappedBy = "tour", cascade = CascadeType.ALL)
     private List<TourImage> tourImages;
 }

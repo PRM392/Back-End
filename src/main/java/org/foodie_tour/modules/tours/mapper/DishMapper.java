@@ -12,12 +12,15 @@ public interface DishMapper {
 
     @Mapping(target = "dishId", ignore = true)
     @Mapping(target = "tour", ignore = true)
-    @Mapping(target = "images", ignore = true)
+    @Mapping(target = "dishImages", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "checkPoint", ignore = true)
     Dish toEntity(DishRequest dishRequest);
 
     @Mapping(target = "tourId", source = "tour.tourId")
+    @Mapping(target = "checkpointId", source = "checkPoint.checkpointId")
+//    @Mapping(target = "locationName", source = "checkpoint.locationName")
     DishResponse toResponse(Dish dish);
 
     @Mapping(target = "dishId", ignore = true)

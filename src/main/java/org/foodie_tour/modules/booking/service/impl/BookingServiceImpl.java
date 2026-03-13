@@ -122,6 +122,7 @@ public class BookingServiceImpl implements BookingService {
         BookingLog log = BookingLog.builder()
                 .booking(booking)
                 .description("Đặt lịch thành công")
+                .bookingStatus(booking.getBookingStatus())
                 .build();
 
         booking.getBookingLogs().add(log);

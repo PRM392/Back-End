@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 
+import org.foodie_tour.modules.booking.enums.BookingStatus;
 import java.time.LocalDateTime;
 
 @Getter
@@ -16,6 +17,7 @@ public class BookingLogResponse {
     private Long bookingLogId;
 
     private String description;
+    private BookingStatus bookingStatus;
 
     LocalDateTime createAt;
 

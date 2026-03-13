@@ -10,9 +10,9 @@ import java.time.LocalDateTime;
 
 @Entity
 @Data
-@Table(name = "checkpoint_images")
 @AllArgsConstructor
 @NoArgsConstructor
+@Table(name = "checkpoint_images")
 @Builder
 public class CheckPointImage {
     @Id

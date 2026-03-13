@@ -2,9 +2,7 @@ package org.foodie_tour.modules.images.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.foodie_tour.modules.feedback.entity.Feedback;
 import org.foodie_tour.modules.images.enums.ImageStatus;
-import org.foodie_tour.modules.tours.entity.Dish;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
@@ -33,27 +31,23 @@ public class Image {
     @Enumerated(EnumType.STRING)
     private ImageStatus imageStatus = ImageStatus.ACTIVE;
 
-    @Builder.Default
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 
-    @Builder.Default
     @UpdateTimestamp
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    private LocalDateTime updatedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "dish_id")
-    private Dish dish;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "feedback_id")
-    private Feedback feedback;
-
-    @OneToMany(mappedBy = "image", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "image", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<CheckPointImage> checkPointImages;
 
     @OneToMany(mappedBy = "image", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<TourImage> tourImages;
+
+    @OneToMany(mappedBy = "image", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<FeedbackImage> feedbackImages;
+
+    @OneToMany(mappedBy = "image", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<DishImage> dishImages;
 }
