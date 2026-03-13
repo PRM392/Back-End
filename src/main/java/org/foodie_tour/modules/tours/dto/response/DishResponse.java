@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 @Builder
 public class DishResponse {
     private Long tourId;
+    private Long checkpointId;
     private Long dishId;
     private String dishName;
     private String dishDescription;

@@ -5,11 +5,13 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.foodie_tour.modules.customer.entity.Customer;
 import org.foodie_tour.modules.feedback.enums.FeedbackStatus;
+import org.foodie_tour.modules.images.entity.FeedbackImage;
 import org.foodie_tour.modules.images.entity.Image;
 import org.foodie_tour.modules.schedules.entity.Schedule;
 import org.foodie_tour.modules.tours.entity.Tour;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -49,8 +51,8 @@ public class Feedback {
     @Column(name = "rating")
     Integer rating;
 
-    @OneToMany(mappedBy = "feedback", cascade = CascadeType.ALL)
-    List<Image> images;
+    @OneToMany(mappedBy = "feedback", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FeedbackImage> feedbackImages = new ArrayList<>();
 
     @Column(name = "created_at")
     LocalDateTime createdAt;

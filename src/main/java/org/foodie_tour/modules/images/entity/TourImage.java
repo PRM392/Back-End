@@ -1,16 +1,11 @@
 package org.foodie_tour.modules.images.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
+import lombok.*;
 import org.foodie_tour.modules.images.enums.TourImageStatus;
 import org.foodie_tour.modules.tours.entity.Tour;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -30,16 +25,12 @@ public class TourImage {
     @Column(name = "is_primary")
     private Boolean isPrimary = false;
 
-    @Column(name = "image_url")
-    private String imageUrl;
-
     @Column(name = "display_order")
     private int displayOrder;
 
-    @Builder.Default
     @Column(name = "tour_image_status")
     @Enumerated(EnumType.STRING)
-    private TourImageStatus tourImageStatus = TourImageStatus.ACTIVE;
+    private TourImageStatus tourImageStatus;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

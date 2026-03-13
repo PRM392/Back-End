@@ -4,11 +4,13 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.foodie_tour.modules.images.entity.Image;
+import org.foodie_tour.modules.images.entity.DishImage;
+import org.foodie_tour.modules.routes.entity.CheckPoint;
 import org.foodie_tour.modules.tours.enums.DishStatus;
 import org.foodie_tour.modules.tours.enums.DishType;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -50,6 +52,10 @@ public class Dish {
     @JoinColumn(name = "tour_id", nullable = false)
     private Tour tour;
 
-    @OneToMany(mappedBy = "dish", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<Image> images;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "checkpoint_id")
+    private CheckPoint checkPoint;
+
+    @OneToMany(mappedBy = "dish", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DishImage> dishImages = new ArrayList<>();
 }

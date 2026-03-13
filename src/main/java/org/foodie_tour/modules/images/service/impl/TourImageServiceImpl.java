@@ -42,7 +42,6 @@ public class TourImageServiceImpl implements TourImageService {
         TourImage tourImage = new TourImage();
         tourImage.setTour(tour);
         tourImage.setImage(image);
-        tourImage.setImageUrl(image.getImageUrl());
         tourImage.setIsPrimary(request.getIsPrimary());
         tourImage.setDisplayOrder(request.getDisplayOrder());
         tourImage.setTourImageStatus(request.getStatus());
@@ -59,7 +58,7 @@ public class TourImageServiceImpl implements TourImageService {
                 .map(img -> TourImageResponse.builder()
                         .imageId(img.getImage().getImageId())
                         .tourImageId(img.getTourImageId())
-                        .imageUrl(img.getImageUrl())
+                        .imageUrl(img.getImage().getImageUrl())
                         .isPrimary(img.getIsPrimary())
                         .displayOrder(img.getDisplayOrder())
                         .status(img.getTourImageStatus())

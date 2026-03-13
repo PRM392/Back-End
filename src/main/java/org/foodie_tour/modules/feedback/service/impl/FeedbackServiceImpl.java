@@ -17,15 +17,20 @@ import org.foodie_tour.modules.feedback.enums.FeedbackStatus;
 import org.foodie_tour.modules.feedback.mapper.FeedbackMapper;
 import org.foodie_tour.modules.feedback.repository.FeedbackRepository;
 import org.foodie_tour.modules.feedback.service.FeedbackService;
+import org.foodie_tour.modules.images.entity.FeedbackImage;
 import org.foodie_tour.modules.images.entity.Image;
+import org.foodie_tour.modules.images.enums.FeedBackImageStatus;
+import org.foodie_tour.modules.images.enums.ImageStatus;
+import org.foodie_tour.modules.images.repository.ImageRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +40,7 @@ public class FeedbackServiceImpl implements FeedbackService {
     private final S3Service s3Service;
     private final BookingRepository bookingRepository;
     private final CustomerBookingRepository customerBookingRepository;
+    private final ImageRepository imageRepository;
 
     @Override
     @Transactional
@@ -59,21 +65,9 @@ public class FeedbackServiceImpl implements FeedbackService {
         feedback.setSchedule(booking.getSchedule());
         feedback.setCreatedAt(LocalDateTime.now());
         feedback.setStatus(FeedbackStatus.ACTIVE);
-        feedbackRepository.save(feedback);
+        feedback = feedbackRepository.save(feedback);
 
-        if (files != null && !files.isEmpty()) {
-            List<Image> feedbackImages = new ArrayList<>();
-            for (MultipartFile file : files) {
-                String publicUrl = s3Service.uploadFile(file);
-                Image img = new Image();
-                img.setImageUrl(publicUrl);
-                img.setFeedback(feedback);
-                feedbackImages.add(img);
-            }
-            feedback.setImages(feedbackImages);
-        }
-        Feedback saved = feedbackRepository.save(feedback);
-        return feedbackMapper.toResponse(saved);
+        return getFeedbackResponse(files, feedback);
     }
 
     @Override
@@ -104,18 +98,33 @@ public class FeedbackServiceImpl implements FeedbackService {
         feedbackMapper.updatedEntity(feedbackRequest, feedback);
         feedback.setUpdatedAt(LocalDateTime.now());
 
-        if (files != null && !files.isEmpty()) {
+        return getFeedbackResponse(files, feedback);
+
+    }
+
+    private FeedbackResponse getFeedbackResponse(List<MultipartFile> files, Feedback feedback) throws IOException {
+        if (!CollectionUtils.isEmpty(files)) {
             for (MultipartFile file : files) {
                 String url = s3Service.uploadFile(file);
-                Image img = new Image();
-                img.setImageUrl(url);
-                img.setFeedback(feedback);
-                feedback.getImages().add(img);
+                Image img = Image.builder()
+                        .imageUrl(url)
+                        .imageStatus(ImageStatus.ACTIVE)
+                        .createdAt(LocalDateTime.now())
+                        .updatedAt(LocalDateTime.now())
+                        .build();
+                img = imageRepository.save(img);
+
+                FeedbackImage feedbackImage = FeedbackImage.builder()
+                        .feedback(feedback)
+                        .image(img)
+                        .status(FeedBackImageStatus.ACTIVE)
+                        .createdAt(LocalDateTime.now())
+                        .build();
+                feedback.getFeedbackImages().add(feedbackImage);
             }
         }
         Feedback saved = feedbackRepository.save(feedback);
         return feedbackMapper.toResponse(saved);
-
     }
 
     @Override

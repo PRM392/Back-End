@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -55,20 +56,16 @@ public class CheckPointServiceImpl implements CheckPointService {
                 Image img = Image.builder()
                         .imageUrl(publicUrl)
                         .imageStatus(ImageStatus.ACTIVE)
-                        .createdAt(LocalDateTime.now())
-                        .updatedAt(LocalDateTime.now())
+                        .imageDescription("Ảnh cho checkpoint: " + saved.getLocationName()) // Gán description
                         .build();
                 img = imageRepository.save(img);
 
-                CheckPointImage cpImg = CheckPointImage.builder()
+                cpImages.add(CheckPointImage.builder()
                         .checkpoint(saved)
                         .image(img)
                         .status(CheckPointImageStatus.ACTIVE)
                         .isPrimary(primaryIndex != null && primaryIndex == i)
-                        .createdAt(LocalDateTime.now())
-                        .updatedAt(LocalDateTime.now())
-                        .build();
-                cpImages.add(cpImg);
+                        .build());
             }
             saved.setCheckpointImages(cpImages);
             checkPointRepository.save(saved);
@@ -81,7 +78,7 @@ public class CheckPointServiceImpl implements CheckPointService {
         Tour tour = tourRepository.findById(tourId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tour không tồn tại"));
 
-        List<CheckPoint> checkPoints = checkPointRepository.findByTour_TourId(tourId);
+        Optional<CheckPoint> checkPoints = checkPointRepository.findWithImagesByCheckpointId(tourId);
         return checkPoints.stream()
                 .map(checkPointMapper::toResponse)
                 .toList();

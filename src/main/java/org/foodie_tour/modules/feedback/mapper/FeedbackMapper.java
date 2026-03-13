@@ -14,7 +14,7 @@ public interface FeedbackMapper {
         @Mapping(target = "customer", ignore = true)
         @Mapping(target = "tour", ignore = true)
         @Mapping(target = "schedule", ignore = true)
-        @Mapping(target = "images", ignore = true)
+        @Mapping(target = "feedbackImages", ignore = true)
         @Mapping(target = "createdAt", ignore = true)
         @Mapping(target = "updatedAt", ignore = true)
         Feedback toEntity(FeedbackRequest request);
@@ -29,7 +29,6 @@ public interface FeedbackMapper {
         @Mapping(target = "customer", ignore = true)
         @Mapping(target = "tour", ignore = true)
         @Mapping(target = "schedule", ignore = true)
-        @Mapping(target = "images", ignore = true)
         @Mapping(target = "createdAt", ignore = true)
         @Mapping(target = "updatedAt", ignore = true)
         void updatedEntity(FeedbackRequest request, @MappingTarget Feedback feedback);

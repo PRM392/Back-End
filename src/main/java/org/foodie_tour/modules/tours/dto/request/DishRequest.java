@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 public class DishRequest {
 
     private Long tourId;
+    private Long checkpointId;
     private String dishName;
     private String dishDescription;
     private Boolean isPrimary;
