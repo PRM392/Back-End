@@ -9,6 +9,7 @@ import org.foodie_tour.modules.tours.service.DishService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,6 +24,7 @@ public class DishController {
     private final DishService dishService;
 
     @PostMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAuthority('CREATE_DISH')")
     public ResponseEntity<DishResponse> createDish(
             @RequestPart("request") @Valid DishRequest dishRequest,
             @RequestPart(value = "files", required = false) List<MultipartFile> files
@@ -48,6 +50,7 @@ public class DishController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('UPDATE_DISH')")
     public ResponseEntity<DishResponse> updateDish(
             @PathVariable Long id,
             @Valid @RequestBody DishRequest dishRequest
@@ -56,6 +59,7 @@ public class DishController {
         return ResponseEntity.ok(response);
     }
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('DELETE_DISH')")
     public ResponseEntity<String> deleteDish(@PathVariable Long id) {
         dishService.deleteDish(id);
         return ResponseEntity.ok("Xóa món ăn thành công");
