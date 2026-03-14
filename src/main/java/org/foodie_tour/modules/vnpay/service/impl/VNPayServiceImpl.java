@@ -361,7 +361,6 @@ public class VNPayServiceImpl implements VNPayService {
                 customer.setStatus(CustomerStatus.COMPLETED);
                 customerRepository.save(customer);
             });
-
             returnUrl = SUCCESS_URL;
         } else {
             // Update booking & transaction
@@ -379,6 +378,12 @@ public class VNPayServiceImpl implements VNPayService {
 
         bookingRepository.save(booking);
 
-        return returnUrl;
+        // Append query params để hỗ trợ deep link mobile
+        // Ví dụ: vietvibe://payment/result?status=success&bookingCode=FT...
+        String statusParam = success ? "success" : "fail";
+        char joinChar = returnUrl.contains("?") ? '&' : '?';
+        String finalUrl = returnUrl + joinChar + "status=" + statusParam + "&bookingCode=" + bookingCode;
+
+        return finalUrl;
     }
 }

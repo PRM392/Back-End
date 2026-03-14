@@ -43,6 +43,7 @@ import org.foodie_tour.modules.schedules.repository.ScheduleRepository;
 import org.foodie_tour.modules.tours.entity.Tour;
 import org.foodie_tour.modules.vnpay.dto.request.PaymentRequest;
 import org.foodie_tour.modules.vnpay.service.VNPayService;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -70,23 +71,30 @@ public class BookingServiceImpl implements BookingService {
 
     @Transactional
     public BookingResponse createBooking(BookingCreateRequest request) {
-        Customer customer = customerRepository.findByEmail(request.getEmail())
-                .map(existing -> {
-                    // Email đã tồn tại → cập nhật name/phone, đặt lại PENDING
-                    existing.setCustomerName(request.getCustomerName());
-                    existing.setPhone(request.getPhone());
-                    existing.setStatus(CustomerStatus.PENDING);
-                    return customerRepository.save(existing);
-                })
-                .orElseGet(() -> {
-                    // Email chưa tồn tại → tạo customer mới
-                    Customer newCustomer = new Customer();
-                    newCustomer.setEmail(request.getEmail());
-                    newCustomer.setCustomerName(request.getCustomerName());
-                    newCustomer.setPhone(request.getPhone());
-                    newCustomer.setStatus(CustomerStatus.PENDING);
-                    return customerRepository.save(newCustomer);
-                });
+        Customer customer;
+        try {
+            customer = customerRepository.findByEmail(request.getEmail())
+                    .map(existing -> {
+                        // Email đã tồn tại → cập nhật name/phone, đặt lại PENDING
+                        existing.setCustomerName(request.getCustomerName());
+                        existing.setPhone(request.getPhone());
+                        existing.setStatus(CustomerStatus.PENDING);
+                        return customerRepository.save(existing);
+                    })
+                    .orElseGet(() -> {
+                        // Email chưa tồn tại → tạo customer mới
+                        Customer newCustomer = new Customer();
+                        newCustomer.setEmail(request.getEmail());
+                        newCustomer.setCustomerName(request.getCustomerName());
+                        newCustomer.setPhone(request.getPhone());
+                        newCustomer.setStatus(CustomerStatus.PENDING);
+                        return customerRepository.save(newCustomer);
+                    });
+        } catch (DataIntegrityViolationException ex) {
+            // Trường hợp DB vẫn đang có unique constraint trên email và đã có record
+            customer = customerRepository.findByEmail(request.getEmail())
+                    .orElseThrow(() -> new InvalidateDataException("Không thể xử lý email khách hàng"));
+        }
 
         // Create booking
         Booking booking = bookingMapper.toBooking(request);
