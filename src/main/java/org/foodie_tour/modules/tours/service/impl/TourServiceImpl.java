@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.foodie_tour.common.exception.DuplicateResourceException;
 import org.foodie_tour.common.exception.InvalidateDataException;
 import org.foodie_tour.common.exception.ResourceNotFoundException;
+import org.foodie_tour.modules.tours.dto.request.TourCustomConfigRequest;
 import org.foodie_tour.modules.tours.dto.request.TourRequest;
 import org.foodie_tour.modules.tours.dto.response.TourResponse;
 import org.foodie_tour.modules.tours.entity.Tour;
@@ -41,6 +42,20 @@ public class TourServiceImpl implements TourService {
         Tour tour = tourMapper.toEntity(tourRequest);
         tour = tourRepository.save(tour);
         return tourMapper.toResponse(tour);
+    }
+
+    @Override
+    public TourResponse updatedCustomConfig(Long tourId, TourCustomConfigRequest request) {
+        Tour tour = tourRepository.findById(tourId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tour"));
+
+        tour.setIsCustomizable(request.getIsCustomizable());
+        tour.setTotalCustomPlaces(request.getTotalCustomPlaces());
+        tour.setMinFoodPlaces(request.getMinFoodPlaces());
+        tour.setMinVisitPlaces(request.getMinVisitPlaces());
+
+        Tour savedTour = tourRepository.save(tour);
+        return tourMapper.toResponse(savedTour);
     }
 
     @Override

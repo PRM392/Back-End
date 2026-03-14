@@ -6,6 +6,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.foodie_tour.modules.routes.enums.RouteCheckPointStatus;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "route_checkpoints")
@@ -23,8 +27,9 @@ public class RouteCheckpoint {
     @JoinColumn(name = "route_id")
     private Route route;
 
-    @Column(name = "checkpoint_id")
-    private Long checkpointId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "checkpoint_id")
+    private CheckPoint checkPoint;
 
     @Column(name = "\"order\"")
     private Integer order;
@@ -32,4 +37,12 @@ public class RouteCheckpoint {
     @Column(name = "route_checkpoint_status")
     @Enumerated(EnumType.STRING)
     private RouteCheckPointStatus status;
+
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }

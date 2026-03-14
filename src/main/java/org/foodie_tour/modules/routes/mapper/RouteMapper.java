@@ -15,8 +15,9 @@ import org.mapstruct.MappingTarget;
 public interface RouteMapper {
 
     @Mapping(target = "routeId", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "routeCheckpoints", source = "checkPointOrderRequests")
+    @Mapping(target = "tour", ignore = true)
+    @Mapping(target = "routeCheckpoints", ignore = true)
+    @Mapping(target = "schedules", ignore = true)
     Route toEntity(RouteRequest request);
 
     @Mapping(target = "routeCheckpointId", ignore = true)

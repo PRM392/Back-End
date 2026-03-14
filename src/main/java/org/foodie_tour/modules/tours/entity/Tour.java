@@ -52,10 +52,22 @@ public class Tour {
     private TourStatus tourStatus;
 
     @Column(name = "created_at")
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "is_customizable")
+    private Boolean isCustomizable = false;
+
+    @Column(name = "min_food_places")
+    private Integer minFoodPlaces;
+
+    @Column(name = "min_visit_places")
+    private Integer minVisitPlaces;
+
+    @Column(name = "total_custom_places")
+    private Integer totalCustomPlaces;
 
     @OneToMany(mappedBy = "tour", cascade = CascadeType.ALL)
     private List<Dish> dishes;

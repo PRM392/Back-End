@@ -12,14 +12,12 @@ import java.time.LocalDateTime;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class BookingResponse {
     Long bookingId;
-
     String bookingCode;
-
+    Long scheduleId;
+    Long routeId;
+    Long tourId;
     Long totalPrice;
-
     String pickupLocation;
-
     BookingStatus bookingStatus;
-
     LocalDateTime departureTime;
 }
