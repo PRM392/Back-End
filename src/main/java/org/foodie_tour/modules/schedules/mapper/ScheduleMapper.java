@@ -13,6 +13,7 @@ public interface ScheduleMapper {
     @Mapping(target = "scheduleId", ignore = true)
     @Mapping(target = "tour", ignore = true)
     @Mapping(target = "route", ignore = true)
+    @Mapping(target = "departureAt", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     Schedule toEntity(ScheduleRequest scheduleRequest);

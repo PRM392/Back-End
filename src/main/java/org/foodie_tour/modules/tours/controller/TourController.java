@@ -2,6 +2,7 @@ package org.foodie_tour.modules.tours.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.foodie_tour.modules.tours.dto.request.TourCustomConfigRequest;
 import org.foodie_tour.modules.tours.dto.request.TourRequest;
 import org.foodie_tour.modules.tours.dto.response.TourResponse;
 import org.foodie_tour.modules.tours.enums.TourStatus;
@@ -70,5 +71,14 @@ public class TourController {
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         return ResponseEntity.ok(tourService.searchTours(tourName, status, minPrice, maxPrice, pageable));
+    }
+
+    @PutMapping("/{tourId}/custom-config")
+    public ResponseEntity<TourResponse> updateCustomConfig(
+            @PathVariable Long tourId,
+            @Valid @RequestBody TourCustomConfigRequest request
+            ) {
+        TourResponse response = tourService.updatedCustomConfig(tourId, request);
+        return ResponseEntity.ok(response);
     }
 }
