@@ -10,6 +10,11 @@ import org.foodie_tour.modules.booking.enums.BookingStatus;
 import org.foodie_tour.modules.booking.mapper.BookingMapper;
 import org.foodie_tour.modules.booking.repository.BookingRepository;
 import org.foodie_tour.modules.booking.service.CustomTourService;
+import org.foodie_tour.modules.customer.entity.Customer;
+import org.foodie_tour.modules.customer.entity.CustomerBooking;
+import org.foodie_tour.modules.customer.enums.CustomerStatus;
+import org.foodie_tour.modules.customer.repository.CustomerBookingRepository;
+import org.foodie_tour.modules.customer.repository.CustomerRepository;
 import org.foodie_tour.modules.routes.entity.CheckPoint;
 import org.foodie_tour.modules.routes.entity.Route;
 import org.foodie_tour.modules.routes.entity.RouteCheckpoint;
@@ -36,10 +41,28 @@ public class CustomTourServiceImpl implements CustomTourService {
     private final RouteRepository routeRepository;
     private final BookingRepository bookingRepository;
     private final BookingMapper bookingMapper;
+    private final CustomerRepository customerRepository;
+    private final CustomerBookingRepository customerBookingRepository;
 
     @Override
     @Transactional
     public BookingResponse createCustomBooking(CustomBookingRequest request) {
+        Customer customer = customerRepository.findByEmail(request.getEmail())
+                .map(existing -> {
+                    existing.setCustomerName(request.getCustomerName());
+                    existing.setPhone(request.getPhone());
+                    existing.setStatus(CustomerStatus.PENDING);
+                    return customerRepository.save(existing);
+                })
+                .orElseGet(() -> {
+                    Customer newCustomer = new Customer();
+                    newCustomer.setEmail(request.getEmail());
+                    newCustomer.setCustomerName(request.getCustomerName());
+                    newCustomer.setPhone(request.getPhone());
+                    newCustomer.setStatus(CustomerStatus.PENDING);
+                    return customerRepository.save(newCustomer);
+                });
+
         Schedule schedule = scheduleRepository.findById(request.getScheduleId())
                 .orElseThrow(() -> new ResourceNotFoundException("Lịch trình không tồn tại"));
 
@@ -62,6 +85,12 @@ public class CustomTourServiceImpl implements CustomTourService {
         booking.setTotalPrice(total);
 
         Booking savedBooking = bookingRepository.save(booking);
+
+        CustomerBooking customerBooking = new CustomerBooking();
+        customerBooking.setCustomer(customer);
+        customerBooking.setBooking(savedBooking);
+        customerBooking.setIsMain(true);
+        customerBookingRepository.save(customerBooking);
 
         return bookingMapper.toResponse(savedBooking);
     }
