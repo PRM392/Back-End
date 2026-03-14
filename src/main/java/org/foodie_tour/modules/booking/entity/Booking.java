@@ -52,7 +52,7 @@ public class Booking {
     @Column(name = "customer_name")
     String customerName;
 
-    @Column(name = "email", unique = true)
+    @Column(name = "email")
     String email;
 
     @Column(name = "phone")
