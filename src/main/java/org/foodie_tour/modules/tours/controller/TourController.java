@@ -13,6 +13,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +25,7 @@ public class TourController {
     private final TourService tourService;
 
     @PostMapping()
+    @PreAuthorize("hasAuthority('CREATE_TOUR')")
     public ResponseEntity<TourResponse> createTour(@Valid @RequestBody TourRequest tourRequest) {
         TourResponse response = tourService.createTour(tourRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -46,6 +48,7 @@ public class TourController {
     }
 
     @PutMapping("/{tourId}")
+    @PreAuthorize("hasAuthority('UPDATE_TOUR')")
     public ResponseEntity<TourResponse> updateTour(
             @PathVariable Long tourId,
             @Valid @RequestBody TourRequest tourRequest
@@ -55,6 +58,7 @@ public class TourController {
     }
 
     @DeleteMapping("{tourId}")
+    @PreAuthorize("hasAuthority('DELETE_TOUR')")
     public ResponseEntity<String> deleteTour(
             @PathVariable Long tourId
     ) {
