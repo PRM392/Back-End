@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.foodie_tour.modules.schedules.enums.ScheduleStatus;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.time.LocalDateTime;
 
@@ -28,6 +29,8 @@ public class ScheduleRequest {
 
     @Min(value = 1, message = "Số lượng khách tối đa ít nhất là 1")
     private Integer maxPax;
+
     private LocalDateTime departureAt;
     private ScheduleStatus scheduleStatus;
+    private Boolean isTemplate;
 }

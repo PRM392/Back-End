@@ -3,6 +3,7 @@ package org.foodie_tour.modules.schedules.dto.response;
 import lombok.Builder;
 import lombok.Data;
 import org.foodie_tour.modules.schedules.enums.ScheduleStatus;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.time.LocalDateTime;
 

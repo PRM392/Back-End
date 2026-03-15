@@ -38,13 +38,13 @@ spring:
     properties:
       hibernate:
         format_sql: false
-  sql:
-    init:
-      mode: always
-      data-locations:
-        - classpath:rbac/insert-role.sql
-        - classpath:rbac/insert-permission.sql
-        - classpath:rbac/insert-role-permission.sql
+#  sql:
+#    init:
+#      mode: always
+#      data-locations:
+#        - classpath:rbac/insert-role.sql
+#        - classpath:rbac/insert-permission.sql
+#        - classpath:rbac/insert-role-permission.sql
 
 aws:
   s3:
