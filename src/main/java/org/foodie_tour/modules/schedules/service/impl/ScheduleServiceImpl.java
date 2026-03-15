@@ -48,7 +48,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         Schedule schedule = scheduleMapper.toEntity(request);
         schedule.setTour(tour);
         schedule.setRoute(route);
-        schedule.setCreatedAt(LocalDateTime.now());
+        schedule.setIsTemplate(request.getIsTemplate() != null ? request.getIsTemplate() : false);
         schedule = scheduleRepository.save(schedule);
         return scheduleMapper.toResponse(schedule);
     }

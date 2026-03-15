@@ -41,6 +41,7 @@ import org.foodie_tour.modules.onepay.service.OnePayService;
 import org.foodie_tour.modules.mail.dto.request.SendMailRequest;
 import org.foodie_tour.modules.mail.service.MailService;
 import org.foodie_tour.modules.schedules.entity.Schedule;
+import org.foodie_tour.modules.schedules.enums.ScheduleStatus;
 import org.foodie_tour.modules.schedules.repository.ScheduleRepository;
 import org.foodie_tour.modules.system.entity.SystemConfig;
 import org.foodie_tour.modules.system.repository.SystemConfigRepository;
@@ -51,11 +52,11 @@ import org.foodie_tour.modules.transaction.enums.TransactionStatus;
 import org.foodie_tour.modules.transaction.repository.TransactionsRepository;
 import org.foodie_tour.modules.vnpay.dto.request.PaymentRequest;
 import org.foodie_tour.modules.vnpay.service.VNPayService;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -81,68 +82,72 @@ public class BookingServiceImpl implements BookingService {
 
     @Transactional
     public BookingResponse createBooking(BookingCreateRequest request) {
-        Customer customer;
-        try {
-            customer = customerRepository.findByEmail(request.getEmail())
-                    .map(existing -> {
-                        // Email đã tồn tại → cập nhật name/phone, đặt lại PENDING
-                        existing.setCustomerName(request.getCustomerName());
-                        existing.setPhone(request.getPhone());
-                        existing.setStatus(CustomerStatus.PENDING);
-                        return customerRepository.save(existing);
-                    })
-                    .orElseGet(() -> {
-                        // Email chưa tồn tại → tạo customer mới
-                        Customer newCustomer = new Customer();
-                        newCustomer.setEmail(request.getEmail());
-                        newCustomer.setCustomerName(request.getCustomerName());
-                        newCustomer.setPhone(request.getPhone());
-                        newCustomer.setStatus(CustomerStatus.PENDING);
-                        return customerRepository.save(newCustomer);
-                    });
-        } catch (DataIntegrityViolationException ex) {
-            // Trường hợp DB vẫn đang có unique constraint trên email và đã có record
-            customer = customerRepository.findByEmail(request.getEmail())
-                    .orElseThrow(() -> new InvalidateDataException("Không thể xử lý email khách hàng"));
+        Customer customer = customerRepository.findByEmail(request.getEmail())
+                .map(existing -> {
+                    existing.setCustomerName(request.getCustomerName());
+                    existing.setPhone(request.getPhone());
+                    existing.setStatus(CustomerStatus.PENDING);
+                    return customerRepository.save(existing);
+                })
+                .orElseGet(() -> {
+                    Customer newCustomer = new Customer();
+                    newCustomer.setEmail(request.getEmail());
+                    newCustomer.setCustomerName(request.getCustomerName());
+                    newCustomer.setPhone(request.getPhone());
+                    newCustomer.setStatus(CustomerStatus.PENDING);
+                    return customerRepository.save(newCustomer);
+                });
+
+        Schedule template = scheduleRepository.findById(request.getScheduleId())
+                .orElseThrow(() -> new ResourceNotFoundException("Khung giờ khởi hành không tồn tại"));
+
+        if (!template.getIsTemplate()) {
+            throw new InvalidateDataException("ID cung cấp phải là một khung giờ mẫu (Template)");
         }
 
-        // Create booking
+        LocalDateTime actualDepartureAt = LocalDateTime.of(
+                request.getDepartureDate(),
+                template.getDepartureAt().toLocalTime()
+        );
+
+        Tour tour = template.getTour();
+        if (tour == null) throw new ResourceNotFoundException("Tour không tồn tại");
+
+        Schedule actualSchedule = scheduleRepository.findActualSchedule(tour, actualDepartureAt)
+                .orElseGet(() -> {
+                    Schedule newSchedule = new Schedule();
+                    newSchedule.setTour(tour);
+                    newSchedule.setDepartureAt(actualDepartureAt);
+                    newSchedule.setIsTemplate(false);
+                    newSchedule.setScheduleStatus(ScheduleStatus.ACTIVE);
+                    newSchedule.setMaxPax(template.getMaxPax());
+                    newSchedule.setMinPax(template.getMinPax());
+                    newSchedule.setScheduleDescription(template.getScheduleDescription());
+                    newSchedule.setRoute(template.getRoute());
+                    return scheduleRepository.save(newSchedule);
+                });
+
         Booking booking = bookingMapper.toBooking(request);
-
-        // Default status is pending
+        booking.setSchedule(actualSchedule);
+        booking.setTour(tour);
+        booking.setRoute(actualSchedule.getRoute());
         booking.setBookingStatus(BookingStatus.PENDING);
+        booking.setRefundStatus(RefundStatus.INACTIVE);
 
-        // Schedule & tour verify
-        Schedule schedule = scheduleRepository.findById(request.getScheduleId())
-                .orElseThrow(() -> new ResourceNotFoundException("Lịch khởi hành không tồn tại"));
-        booking.setSchedule(schedule);
+        long adultPrice = tour.getBasePriceAdult() * request.getAdultCount();
+        long childPrice = tour.getBasePriceChild() * request.getChildrenCount();
+        booking.setTotalPrice(adultPrice + childPrice);
 
-        // Calculate tour price
-        Tour tour = schedule.getTour();
-        if (tour != null) {
-            long adultPrice = tour.getBasePriceAdult() * request.getAdultCount();
-            long childPrice = tour.getBasePriceChild() * request.getChildrenCount();
-
-            long total = adultPrice + childPrice;
-            booking.setTotalPrice(total);
-        } else {
-            throw new ResourceNotFoundException("Lịch trình không tồn tại");
-        }
-
-        // Booking code
         String bookingCode = RandomCode.generateRandomCode(10);
         booking.setBookingCode(bookingCode);
 
-        // Default refund status is inactive
-        booking.setRefundStatus(RefundStatus.INACTIVE);
-
-        // Create log
         BookingLog log = BookingLog.builder()
                 .booking(booking)
-                .description("Đặt lịch thành công")
+                .description("Đặt tour thành công. Khởi hành: " + actualDepartureAt)
                 .bookingStatus(booking.getBookingStatus())
                 .build();
 
+        if (booking.getBookingLogs() == null) booking.setBookingLogs(new ArrayList<>());
         booking.getBookingLogs().add(log);
 
         bookingRepository.save(booking);
@@ -152,6 +157,7 @@ public class BookingServiceImpl implements BookingService {
         customerBooking.setBooking(booking);
         customerBooking.setIsMain(true);
         customerBookingRepository.save(customerBooking);
+
         return bookingMapper.toResponse(booking);
     }
 
