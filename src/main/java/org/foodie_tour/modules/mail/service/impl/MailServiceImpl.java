@@ -1,4 +1,4 @@
-package org.foodie_tour.modules.mail.service.Impl;
+package org.foodie_tour.modules.mail.service.impl;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;

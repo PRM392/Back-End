@@ -4,6 +4,7 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import org.foodie_tour.modules.booking.enums.PaymentMethod;
 
@@ -11,6 +12,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
+@Setter
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @AllArgsConstructor
 @NoArgsConstructor
@@ -25,6 +27,7 @@ public class BookingCreateRequest {
     int childrenCount;
     String pickupLocation;
     String customerNote;
+    boolean deposit;
     PaymentMethod paymentMethod;
 
 }
