@@ -62,6 +62,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+
 public class BookingServiceImpl implements BookingService {
     BookingRepository bookingRepository;
     BookingLogRepository bookingLogRepository;
@@ -101,10 +102,6 @@ public class BookingServiceImpl implements BookingService {
         Schedule template = scheduleRepository.findById(request.getScheduleId())
                 .orElseThrow(() -> new ResourceNotFoundException("Khung giờ khởi hành không tồn tại"));
 
-        if (!template.getIsTemplate()) {
-            throw new InvalidateDataException("ID cung cấp phải là một khung giờ mẫu (Template)");
-        }
-
         LocalDateTime actualDepartureAt = LocalDateTime.of(
                 request.getDepartureDate(),
                 template.getDepartureAt().toLocalTime()
@@ -133,10 +130,21 @@ public class BookingServiceImpl implements BookingService {
         booking.setRoute(actualSchedule.getRoute());
         booking.setBookingStatus(BookingStatus.PENDING);
         booking.setRefundStatus(RefundStatus.INACTIVE);
+        booking.setDeposit(request.isDeposit());
 
         long adultPrice = tour.getBasePriceAdult() * request.getAdultCount();
         long childPrice = tour.getBasePriceChild() * request.getChildrenCount();
+        long totalPrice = adultPrice + childPrice;
         booking.setTotalPrice(adultPrice + childPrice);
+
+        if (request.isDeposit()) {
+            long depositAmount = (long) (totalPrice * 0.3); // 30% cọc
+            booking.setAmountPaid(0L);
+            booking.setRemainingAmount(totalPrice - depositAmount);
+        } else {
+            booking.setAmountPaid(0L);
+            booking.setRemainingAmount(0L);
+        }
 
         String bookingCode = RandomCode.generateRandomCode(10);
         booking.setBookingCode(bookingCode);
@@ -176,7 +184,9 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Đặt lịch không tồn tại"));
 
-        PaymentRequest request = new PaymentRequest(bookingId, booking.getTotalPrice());
+        long amountToPay = booking.isDeposit() ? (long) (booking.getTotalPrice() * 0.3) : booking.getTotalPrice();
+        PaymentRequest request = new PaymentRequest(bookingId, amountToPay);
+        bookingRepository.save(booking);
         if (booking.getPaymentMethod() == PaymentMethod.VNPAY) {
             return vnPayService.generatePaymentUrl(request, servletRequest);
         } else if (booking.getPaymentMethod() == PaymentMethod.VISA) {
@@ -383,6 +393,41 @@ public class BookingServiceImpl implements BookingService {
         bookingRepository.save(booking);
 
         return "Yêu cầu của bạn đã được phê duyệt.";
+    }
+
+    @Override
+    @Transactional
+    public BookingResponse completeOnTourPayment(String bookingCode, PaymentMethod method) {
+        Booking booking = findByBookingCode(bookingCode);
+
+        if (booking.getBookingStatus() != BookingStatus.COMPLETED) {
+            throw new InvalidateDataException("Booking phải ở trạng thái COMPLETED (đã cọc) mới có thể thanh toán nốt.");
+        }
+
+        if (booking.getRemainingAmount() == 0) {
+            throw new InvalidateDataException("Tour này đã được thanh toán đủ.");
+        }
+
+        Transactions finalTrans = Transactions.builder()
+                .booking(booking)
+                .amount(booking.getRemainingAmount())
+                .paymentMethod(method)
+                .cashFlow(CashFlow.INCOME)
+                .status(TransactionStatus.SUCCESS)
+                .build();
+        transactionsRepository.save(finalTrans);
+
+        booking.setAmountPaid(booking.getTotalPrice());
+        booking.setRemainingAmount(0L);
+
+        BookingLog log = BookingLog.builder()
+                .booking(booking)
+                .description("Xác nhận On-tour: Khách đã thanh toán " + finalTrans.getAmount() + " bằng " + method)
+                .bookingStatus(booking.getBookingStatus())
+                .build();
+        booking.getBookingLogs().add(log);
+
+        return bookingMapper.toResponse(bookingRepository.save(booking));
     }
 
 }

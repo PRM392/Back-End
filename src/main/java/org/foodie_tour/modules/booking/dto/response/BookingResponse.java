@@ -20,4 +20,7 @@ public class BookingResponse {
     String pickupLocation;
     BookingStatus bookingStatus;
     LocalDateTime departureTime;
+    boolean deposit;
+    Long amountPaid;
+    Long remainingAmount;
 }

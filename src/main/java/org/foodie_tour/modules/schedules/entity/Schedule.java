@@ -45,7 +45,7 @@ public class Schedule {
     @Enumerated(EnumType.STRING)
     private ScheduleStatus scheduleStatus;
 
-    @Column(name = "is_template")
+    @Column(name = "is_template", nullable = false)
     private Boolean isTemplate = false;
 
     @Column(name = "departure_at")

@@ -96,6 +96,15 @@ public class Booking {
     @Enumerated(EnumType.STRING)
     PaymentMethod paymentMethod;
 
+    @Column(name = "is_deposit")
+    boolean deposit;
+
+    @Column(name = "amount_paid")
+    Long amountPaid;
+
+    @Column(name = "remaining_amount")
+    Long remainingAmount;
+
     @OneToMany(mappedBy = "booking", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonManagedReference
     List<BookingLog> bookingLogs = new ArrayList<>();

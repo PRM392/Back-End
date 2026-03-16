@@ -83,6 +83,9 @@ public class ScheduleServiceImpl implements ScheduleService {
         }
 
         scheduleMapper.updateEntity(request, schedule);
+        if (request.getIsTemplate() != null) {
+            schedule.setIsTemplate(request.getIsTemplate());
+        }
         schedule.setTour(tour);
         schedule.setRoute(route);
         schedule.setUpdatedAt(LocalDateTime.now());
