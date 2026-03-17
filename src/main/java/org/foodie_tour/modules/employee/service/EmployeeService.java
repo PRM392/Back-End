@@ -16,4 +16,5 @@ public interface EmployeeService {
     EmployeeResponse changeStatus(Long id, EmployeeStatus status);
     EmployeeResponse updateRole(Long id, Long roleId);
     void updatePassword(SetPasswordRequest request, String accessToken);
+    void deleteEmployee(Long id);
 }
