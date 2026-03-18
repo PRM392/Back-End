@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>🗺️ Tour Tracking WebSocket Test</title>
+  <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; padding: 24px; }
+    h1 { font-size: 1.5rem; color: #38bdf8; margin-bottom: 24px; }
+    h2 { font-size: 1rem; color: #94a3b8; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .card {
+      background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+      padding: 20px;
+    }
+    .card.full { grid-column: 1 / -1; }
+
+    label { font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 4px; margin-top: 12px; }
+    input {
+      width: 100%; padding: 8px 12px; background: #0f172a;
+      border: 1px solid #334155; border-radius: 8px; color: #e2e8f0;
+      font-size: 0.9rem;
+    }
+    input:focus { outline: none; border-color: #38bdf8; }
+
+    button {
+      margin-top: 14px; padding: 10px 20px; border: none; border-radius: 8px;
+      font-size: 0.9rem; font-weight: 600; cursor: pointer; width: 100%;
+      transition: opacity 0.2s;
+    }
+    button:hover { opacity: 0.85; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-blue   { background: #0284c7; color: #fff; }
+    .btn-green  { background: #16a34a; color: #fff; }
+    .btn-orange { background: #d97706; color: #fff; }
+    .btn-red    { background: #dc2626; color: #fff; }
+    .btn-purple { background: #7c3aed; color: #fff; }
+
+    .status-dot {
+      display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+      margin-right: 6px; background: #64748b;
+    }
+    .status-dot.connected { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+    .status-dot.disconnected { background: #ef4444; }
+
+    #log {
+      background: #020617; border-radius: 8px; padding: 12px;
+      font-size: 0.78rem; font-family: monospace; height: 280px;
+      overflow-y: auto; border: 1px solid #1e293b;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .log-info    { color: #38bdf8; }
+    .log-success { color: #22c55e; }
+    .log-warn    { color: #f59e0b; }
+    .log-error   { color: #f87171; }
+    .log-receive { color: #c084fc; }
+
+    .row { display: flex; gap: 10px; }
+    .row input { flex: 1; }
+
+    #sessionInfo {
+      margin-top: 12px; padding: 10px; background: #0f172a;
+      border-radius: 8px; border: 1px dashed #334155; font-size: 0.82rem; color: #94a3b8;
+    }
+    #sessionInfo span { color: #38bdf8; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>🗺️ Tour Tracking — WebSocket STOMP Test</h1>
+
+  <div class="grid">
+
+    <!-- CỘT TRÁI -->
+    <div style="display:flex; flex-direction:column; gap: 20px;">
+
+      <!-- BƯỚC 1: KẾT NỐI -->
+      <div class="card">
+        <h2><span class="status-dot" id="dot"></span>Bước 1 — Kết nối WebSocket</h2>
+        <label>Server URL</label>
+        <input id="wsUrl" value="ws://localhost:8080/ws" />
+        <label>JWT Token (nếu cần)</label>
+        <input id="jwtToken" placeholder="Bearer eyJhbGci..." />
+        <button class="btn-blue" onclick="connect()">🔌 Kết nối</button>
+        <button class="btn-red" onclick="disconnect()" disabled id="btnDisconnect">❌ Ngắt kết nối</button>
+      </div>
+
+      <!-- BƯỚC 2: SUBSCRIBE VIEWER -->
+      <div class="card">
+        <h2>Bước 2 — Viewer Subscribe nhận vị trí</h2>
+        <label>Session ID</label>
+        <input id="subSessionId" placeholder="VD: 1" />
+        <button class="btn-purple" onclick="subscribeViewer()" id="btnSub" disabled>
+          📡 Subscribe /topic/tracking/session/{id}
+        </button>
+      </div>
+
+    </div>
+
+    <!-- CỘT PHẢI -->
+    <div style="display:flex; flex-direction:column; gap: 20px;">
+
+      <!-- BƯỚC 3: GỬI LOCATION -->
+      <div class="card">
+        <h2>Bước 3 — Guide gửi vị trí GPS</h2>
+        <label>Session ID</label>
+        <input id="sendSessionId" placeholder="VD: 1" />
+        <div class="row">
+          <div style="flex:1">
+            <label>Latitude</label>
+            <input id="lat" value="10.762622" />
+          </div>
+          <div style="flex:1">
+            <label>Longitude</label>
+            <input id="lng" value="106.660172" />
+          </div>
+        </div>
+        <button class="btn-green" onclick="sendLocation()" id="btnSend" disabled>
+          📍 Gửi location → /app/tracking/location
+        </button>
+        <button class="btn-orange" onclick="startAutoSend()" id="btnAuto" disabled>
+          🔄 Tự động gửi mỗi 5 giây (giả lập di chuyển)
+        </button>
+        <button class="btn-red" onclick="stopAutoSend()" id="btnStop" disabled style="display:none">
+          ⏹ Dừng tự động gửi
+        </button>
+      </div>
+
+    </div>
+
+    <!-- LOG -->
+    <div class="card full">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
+        <h2 style="margin:0">📋 Log</h2>
+        <button onclick="clearLog()" style="width:auto; margin:0; padding: 4px 12px; background:#334155; color:#e2e8f0; border:none; border-radius:6px; cursor:pointer; font-size:0.78rem;">Xóa</button>
+      </div>
+      <div id="log"></div>
+    </div>
+
+  </div>
+
+  <script>
+    let stompClient = null;
+    let autoTimer = null;
+    let autoStep = 0;
+
+    // Giả lập di chuyển dọc đường phố
+    const gpsPath = [
+      [10.762622, 106.660172],
+      [10.763100, 106.660500],
+      [10.763600, 106.661000],
+      [10.764000, 106.661500],
+      [10.764500, 106.662000],
+      [10.765000, 106.662500],
+    ];
+
+    function log(msg, type = 'info') {
+      const el = document.getElementById('log');
+      const line = document.createElement('div');
+      const now = new Date().toLocaleTimeString('vi-VN');
+      line.className = `log-${type}`;
+      line.textContent = `[${now}] ${msg}`;
+      el.appendChild(line);
+      el.scrollTop = el.scrollHeight;
+    }
+
+    function clearLog() {
+      document.getElementById('log').innerHTML = '';
+    }
+
+    function setConnected(connected) {
+      document.getElementById('dot').className = 'status-dot ' + (connected ? 'connected' : 'disconnected');
+      document.getElementById('btnDisconnect').disabled = !connected;
+      document.getElementById('btnSub').disabled = !connected;
+      document.getElementById('btnSend').disabled = !connected;
+      document.getElementById('btnAuto').disabled = !connected;
+    }
+
+    function connect() {
+      const url = document.getElementById('wsUrl').value.trim();
+      const token = document.getElementById('jwtToken').value.trim();
+
+      log(`Đang kết nối tới ${url} ...`, 'info');
+
+      const headers = {};
+      if (token) headers['Authorization'] = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
+
+      stompClient = new StompJs.Client({
+        brokerURL: url,
+        connectHeaders: headers,
+        reconnectDelay: 0,
+        debug: (str) => console.log('[STOMP]', str),
+
+        onConnect: (frame) => {
+          log('✅ Kết nối thành công!', 'success');
+          setConnected(true);
+        },
+
+        onDisconnect: () => {
+          log('🔌 Đã ngắt kết nối', 'warn');
+          setConnected(false);
+        },
+
+        onStompError: (frame) => {
+          log('❌ STOMP Error: ' + frame.headers['message'], 'error');
+        },
+
+        onWebSocketError: (evt) => {
+          log('❌ WebSocket Error - Kiểm tra server có đang chạy không?', 'error');
+        }
+      });
+
+      stompClient.activate();
+    }
+
+    function disconnect() {
+      if (stompClient) {
+        stopAutoSend();
+        stompClient.deactivate();
+        stompClient = null;
+        setConnected(false);
+      }
+    }
+
+    function subscribeViewer() {
+      const sessionId = document.getElementById('subSessionId').value.trim();
+      if (!sessionId) { log('⚠️ Nhập Session ID để subscribe', 'warn'); return; }
+
+      const topic = `/topic/tracking/session/${sessionId}`;
+      stompClient.subscribe(topic, (message) => {
+        const data = JSON.parse(message.body);
+        log(`📥 NHẬN: Session=${data.sessionId} | Guide=${data.guideName} | lat=${data.latitude} | lng=${data.longitude}`, 'receive');
+      });
+
+      log(`📡 Đã subscribe: ${topic}`, 'success');
+    }
+
+    function sendLocation() {
+      const sessionId = document.getElementById('sendSessionId').value.trim();
+      const lat = parseFloat(document.getElementById('lat').value);
+      const lng = parseFloat(document.getElementById('lng').value);
+
+      if (!sessionId) { log('⚠️ Nhập Session ID', 'warn'); return; }
+
+      const payload = JSON.stringify({ sessionId: parseInt(sessionId), latitude: lat, longitude: lng });
+      stompClient.publish({ destination: '/app/tracking/location', body: payload });
+      log(`📤 GỬI: /app/tracking/location → ${payload}`, 'info');
+    }
+
+    function startAutoSend() {
+      const sessionId = document.getElementById('sendSessionId').value.trim();
+      if (!sessionId) { log('⚠️ Nhập Session ID', 'warn'); return; }
+
+      log('🔄 Bắt đầu tự động gửi vị trí (giả lập di chuyển)...', 'warn');
+      document.getElementById('btnAuto').style.display = 'none';
+      document.getElementById('btnStop').style.display = 'block';
+
+      autoTimer = setInterval(() => {
+        const [lat, lng] = gpsPath[autoStep % gpsPath.length];
+        document.getElementById('lat').value = lat;
+        document.getElementById('lng').value = lng;
+        const payload = JSON.stringify({ sessionId: parseInt(sessionId), latitude: lat, longitude: lng });
+        stompClient.publish({ destination: '/app/tracking/location', body: payload });
+        log(`📤 AUTO #${autoStep + 1}: lat=${lat}, lng=${lng}`, 'info');
+        autoStep++;
+      }, 5000);
+    }
+
+    function stopAutoSend() {
+      if (autoTimer) {
+        clearInterval(autoTimer);
+        autoTimer = null;
+        log('⏹ Dừng tự động gửi', 'warn');
+        document.getElementById('btnAuto').style.display = 'block';
+        document.getElementById('btnStop').style.display = 'none';
+      }
+    }
+  </script>
+</body>
+</html>
