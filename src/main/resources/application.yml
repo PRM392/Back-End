@@ -60,8 +60,8 @@ vnpay:
   return-url: ${VNP_RETURN_URL}
   ipn-url: ${VNP_IPN_URL}
   expired-time: ${VNP_EXPIRE_TIME}
-  payment-success-url: ${VNP_PAYMENT_SUCCESS_URL}
-  payment-failed-url: ${VNP_PAYMENT_FAILED_URL}
+  payment-success-url: ${VNP_PAYMENT_SUCCESS_URL:vietvibe://payment/result}
+  payment-failed-url: ${VNP_PAYMENT_FAILED_URL:vietvibe://payment/result}
 
 onepay:
   merchant-id: ${ONEPAY_MERCHANT_ID}
@@ -69,6 +69,8 @@ onepay:
   hash-secret: ${ONEPAY_HASH_SECRET}
   return-url: ${ONEPAY_RETURN_URL}
   payment-url: ${ONEPAY_PAYMENT_URL}
+  payment-success-url: ${ONEPAY_PAYMENT_SUCCESS_URL:vietvibe://payment/result}
+  payment-failed-url: ${ONEPAY_PAYMENT_FAILED_URL:vietvibe://payment/result}
 auth:
   key: ${AUTH_KEY}
   issuer: ${AUTH_ISSUER}
