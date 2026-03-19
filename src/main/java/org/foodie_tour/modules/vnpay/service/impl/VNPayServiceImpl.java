@@ -30,6 +30,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -225,12 +226,16 @@ public class VNPayServiceImpl implements VNPayService {
     }
 
     private void checkSum(Map<String, String> response) {
+        System.out.println("=== VNPay checkSum START ===");
         if (response.isEmpty()) {
+            System.out.println("checkSum FAIL: response is empty");
             throw new RuntimeException("Thiếu tham số");
         }
 
         String vnp_SecureHash = response.get("vnp_SecureHash");
+        System.out.println("Received vnp_SecureHash: " + vnp_SecureHash);
         if (vnp_SecureHash == null || vnp_SecureHash.isEmpty()) {
+            System.out.println("checkSum FAIL: vnp_SecureHash is null or empty");
             throw new RuntimeException("Dữ liệu không hợp lệ");
         }
 
@@ -239,11 +244,20 @@ public class VNPayServiceImpl implements VNPayService {
         fields.remove("vnp_SecureHash");
         fields.remove("vnp_SecureHashType");
 
+        System.out.println("Fields for hashing: " + fields);
+        System.out.println("HashSecret length: " + (vnPayConfig.getHashSecret() != null ? vnPayConfig.getHashSecret().length() : "NULL"));
+
         String signValue = hashAllFields(fields, vnPayConfig.getHashSecret());
 
+        System.out.println("Computed signValue: " + signValue);
+        System.out.println("Received secureHash: " + vnp_SecureHash);
+        System.out.println("Checksum match: " + signValue.equals(vnp_SecureHash));
+
         if (!signValue.equals(vnp_SecureHash)) {
+            System.out.println("checkSum FAIL: hash mismatch!");
             throw new RuntimeException("Dữ liệu không hợp lệ");
         }
+        System.out.println("=== VNPay checkSum PASS ===");
     }
 
     private Map<String, String> createIPNResponse(String rspCode, String message) {
@@ -303,31 +317,54 @@ public class VNPayServiceImpl implements VNPayService {
 
     @Transactional
     public String processPaymentResponse(Map<String, String> response) {
+        System.out.println("=== VNPay processPaymentResponse START ===");
+        System.out.println("vnp_ResponseCode: " + response.get("vnp_ResponseCode"));
+        System.out.println("vnp_TransactionStatus: " + response.get("vnp_TransactionStatus"));
+        System.out.println("vnp_OrderInfo (bookingCode): " + response.get("vnp_OrderInfo"));
+        System.out.println("vnp_Amount: " + response.get("vnp_Amount"));
+        System.out.println("All params: " + response);
+
         if (response.isEmpty()) {
             throw new RuntimeException("Thiếu tham số");
         }
         try {
             checkSum(response);
-            return buildPaymentStatus(response);
+            System.out.println("Checksum PASSED, proceeding to buildPaymentStatus...");
+            String result = buildPaymentStatus(response);
+            System.out.println("=== VNPay processPaymentResponse SUCCESS, redirect to: " + result + " ===");
+            return result;
         } catch (Exception e) {
-            throw new RuntimeException("Có lỗi xảy ra");
+            System.out.println("=== VNPay processPaymentResponse ERROR ===");
+            System.out.println("Exception type: " + e.getClass().getName());
+            System.out.println("Exception message: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Có lỗi xảy ra: " + e.getMessage(), e);
         }
     }
 
     @Transactional
     public String buildPaymentStatus(Map<String, String> response) {
+        System.out.println("=== buildPaymentStatus START ===");
         String responseCode = response.get("vnp_ResponseCode");
         String vnpTransactionStatus = response.get("vnp_TransactionStatus");
 
         if (!response.containsKey("vnp_Amount")) {
+            System.out.println("buildPaymentStatus FAIL: missing vnp_Amount");
             throw new RuntimeException("Thiếu tham số");
         }
 
         boolean success = responseCode.equals("00") && vnpTransactionStatus.equals("00");
         String bookingCode = response.get("vnp_OrderInfo");
+        System.out.println("bookingCode from vnp_OrderInfo: [" + bookingCode + "]");
+        System.out.println("Payment success: " + success);
 
         Booking booking = bookingRepository.findByBookingCode(bookingCode)
-                .orElseThrow(() -> new ResourceNotFoundException("Đặt lịch không tồn tại"));
+                .orElseThrow(() -> {
+                    System.out.println("buildPaymentStatus FAIL: booking NOT FOUND for code [" + bookingCode + "]");
+                    return new ResourceNotFoundException("Đặt lịch không tồn tại");
+                });
+
+        System.out.println("Booking found: id=" + booking.getBookingId() + ", totalPrice=" + booking.getTotalPrice() + ", isDeposit=" + booking.isDeposit());
 
         long amount = Long.parseLong(response.get("vnp_Amount")) / 100;
 
@@ -335,7 +372,12 @@ public class VNPayServiceImpl implements VNPayService {
                 ? (long) (booking.getTotalPrice() * 0.3)
                 : booking.getTotalPrice();
 
+        System.out.println("vnp_Amount (raw): " + response.get("vnp_Amount") + " -> amount: " + amount);
+        System.out.println("expectedAmount: " + expectedAmount);
+        System.out.println("Amount match: " + (amount == expectedAmount));
+
         if (amount != expectedAmount) {
+            System.out.println("buildPaymentStatus FAIL: amount mismatch! actual=" + amount + " expected=" + expectedAmount);
             throw new InvalidateDataException("Thông tin thanh toán không trùng khớp");
         }
         String vnpTransactionNo = response.get("vnp_TransactionNo");
@@ -358,6 +400,7 @@ public class VNPayServiceImpl implements VNPayService {
 
         Transactions transaction = transactionBuilder.build();
         transactionsRepository.save(transaction);
+        System.out.println("Transaction saved");
 
         // Create log
         BookingLog log = BookingLog.builder()
@@ -385,12 +428,14 @@ public class VNPayServiceImpl implements VNPayService {
             }
 
             returnUrl = SUCCESS_URL;
+            System.out.println("SUCCESS branch: bookingStatus=COMPLETED, amountPaid=" + amount);
         } else {
             // Update booking & transaction
             bookingStatus = BookingStatus.CANCELLED;
             transactionStatus = TransactionStatus.FAILED;
             logDescription = "Thanh toán thất bại";
             returnUrl = FAILED_URL;
+            System.out.println("FAIL branch: bookingStatus=CANCELLED");
         }
 
         transaction.setStatus(transactionStatus);
@@ -400,7 +445,14 @@ public class VNPayServiceImpl implements VNPayService {
         log.setBookingStatus(bookingStatus);
 
         bookingRepository.save(booking);
+        System.out.println("Booking SAVED: status=" + booking.getBookingStatus() + ", amountPaid=" + booking.getAmountPaid());
 
-        return returnUrl;
+        UriComponentsBuilder builder = UriComponentsBuilder
+                .fromUriString(returnUrl)
+                .queryParam("status", success ? "success" : "fail");
+        if (StringUtils.hasText(bookingCode)) {
+            builder.queryParam("bookingCode", bookingCode);
+        }
+        return builder.build(true).toUriString();
     }
 }

@@ -28,6 +28,8 @@ public interface RouteMapper {
     @Mapping(target = "tourId", source = "tour.tourId")
     RouteResponse toResponse(Route route);
 
+    @Mapping(target = "checkpointId", source = "checkPoint.checkpointId")
+    @Mapping(target = "status", expression = "java(entity.getStatus() != null ? entity.getStatus().name() : null)")
     RouteCheckpointResponse toRouteCheckPointResponse(RouteCheckpoint entity);
 
     @Mapping(target = "routeId", ignore = true)

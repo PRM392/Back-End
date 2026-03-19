@@ -19,9 +19,11 @@ import org.foodie_tour.modules.transaction.entity.Transactions;
 import org.foodie_tour.modules.transaction.enums.CashFlow;
 import org.foodie_tour.modules.transaction.enums.TransactionStatus;
 import org.foodie_tour.modules.transaction.repository.TransactionsRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -40,6 +42,12 @@ public class OnePayServiceImpl implements OnePayService {
     private final BookingLogRepository bookingLogRepository;
     private final CustomerBookingRepository customerBookingRepository;
     private final CustomerRepository customerRepository;
+
+    @Value("${onepay.payment-success-url:vietvibe://payment/result}")
+    private String successUrl;
+
+    @Value("${onepay.payment-failed-url:vietvibe://payment/result}")
+    private String failedUrl;
 
     @Override
     public String generatePaymentUrl(long bookingId, HttpServletRequest request) {
@@ -160,13 +168,25 @@ public class OnePayServiceImpl implements OnePayService {
                 }
             });
 
-            return "Thanh toán thành công";
+            return buildDeepLinkRedirectUrl(true, booking.getBookingCode());
         } else {
             booking.setBookingStatus(BookingStatus.CANCELLED);
             bookingRepository.save(booking);
             createBookingLog(booking, "Thanh toán thất bại: " + response.getOrDefault("vpc_Message", txnResponseCode));
-            return "Thanh toán thất bại";
+            return buildDeepLinkRedirectUrl(false, booking.getBookingCode());
         }
+    }
+
+    private String buildDeepLinkRedirectUrl(boolean isSuccess, String bookingCode) {
+        String base = isSuccess ? successUrl : failedUrl;
+        UriComponentsBuilder builder = UriComponentsBuilder
+                .fromUriString(base)
+                .queryParam("gateway", "onepay")
+                .queryParam("status", isSuccess ? "success" : "fail");
+        if (StringUtils.hasText(bookingCode)) {
+            builder.queryParam("bookingCode", bookingCode);
+        }
+        return builder.build(true).toUriString();
     }
 
     private String hmacSHA256(String hexKey, String data) {

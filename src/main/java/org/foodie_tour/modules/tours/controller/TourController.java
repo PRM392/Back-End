@@ -40,7 +40,6 @@ public class TourController {
 
     @GetMapping("/{id}")
     public ResponseEntity<TourResponse> getTourById(
-            @RequestParam("id")
             @PathVariable Long id
     ) {
         TourResponse response = tourService.getTourById(id);

@@ -56,7 +56,7 @@ public class Transactions {
     @Enumerated(EnumType.STRING)
     TransactionStatus status;
 
-    @Column(name = "payment_method")
+    @Column(name = "payment_method", columnDefinition = "varchar(255)")
     @Enumerated(EnumType.STRING)
     PaymentMethod paymentMethod;
 }

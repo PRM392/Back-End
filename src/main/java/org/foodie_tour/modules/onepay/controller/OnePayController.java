@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.foodie_tour.modules.onepay.service.OnePayService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.view.RedirectView;
 
 import java.util.Map;
 
@@ -21,8 +22,10 @@ public class OnePayController {
     }
 
     @GetMapping("/result")
-    public ResponseEntity<String> handleCallback(@RequestParam Map<String, String> params) {
-        String result = onePayService.processPaymentResponse(params);
-        return ResponseEntity.ok(result);
+    public RedirectView handleCallback(@RequestParam Map<String, String> params) {
+        RedirectView redirectView = new RedirectView();
+        String url = onePayService.processPaymentResponse(params);
+        redirectView.setUrl(url);
+        return redirectView;
     }
 }

@@ -11,6 +11,6 @@ public interface CheckPointRepository extends JpaRepository<CheckPoint, Long> {
 
     List<CheckPoint> findByTour_TourId(Long tourId);
 
-    @EntityGraph(attributePaths = {"checkPointImages", "checkPointImages.image"})
+    @EntityGraph(attributePaths = {"checkpointImages", "checkpointImages.image"})
     Optional<CheckPoint> findWithImagesByCheckpointId(Long id);
 }

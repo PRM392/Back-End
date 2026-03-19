@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -78,7 +77,7 @@ public class CheckPointServiceImpl implements CheckPointService {
         Tour tour = tourRepository.findById(tourId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tour không tồn tại"));
 
-        Optional<CheckPoint> checkPoints = checkPointRepository.findWithImagesByCheckpointId(tourId);
+        List<CheckPoint> checkPoints = checkPointRepository.findByTour_TourId(tour.getTourId());
         return checkPoints.stream()
                 .map(checkPointMapper::toResponse)
                 .toList();
