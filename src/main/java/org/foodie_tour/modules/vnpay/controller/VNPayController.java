@@ -33,10 +33,9 @@ public class VNPayController {
     }
 
     @GetMapping("/status")
-    public RedirectView processPaymentResponse(@RequestParam Map<String, String> queryParams) {
-        RedirectView redirectView = new RedirectView();
+    public void processPaymentResponse(@RequestParam Map<String, String> queryParams, jakarta.servlet.http.HttpServletResponse response) throws java.io.IOException {
         String url = vnPayService.processPaymentResponse(queryParams);
-        redirectView.setUrl(url);
-        return redirectView;
+        System.out.println("DEBUG Controller Redirecting to: " + url);
+        response.sendRedirect(url);
     }
 }

@@ -1,4 +1,4 @@
-package org.foodie_tour.modules.aws.s3.service.Impl;
+package org.foodie_tour.modules.aws.s3.service.impl;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;

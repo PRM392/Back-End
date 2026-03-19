@@ -17,12 +17,14 @@ public class OnePayController {
 
     @PostMapping("/generate-payment-url")
     public ResponseEntity<String> generatePaymentUrl(@RequestBody long bookingId, HttpServletRequest request) {
-        return ResponseEntity.ok(onePayService.generatePaymentUrl(bookingId, request));
+        String url = onePayService.generatePaymentUrl(bookingId, request);
+        System.out.println("DEBUG OnePay Generated URL: " + url);
+        return ResponseEntity.ok(url);
     }
 
     @GetMapping("/result")
-    public ResponseEntity<String> handleCallback(@RequestParam Map<String, String> params) {
+    public void handleCallback(@RequestParam Map<String, String> params, jakarta.servlet.http.HttpServletResponse response) throws java.io.IOException {
         String result = onePayService.processPaymentResponse(params);
-        return ResponseEntity.ok(result);
+        response.sendRedirect(result);
     }
 }
