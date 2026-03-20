@@ -35,6 +35,8 @@ FROM (VALUES
           ('CREATE_TOUR', 'Cho phép tạo mới một tour du lịch', 'ACTIVE'),
           ('UPDATE_TOUR', 'Cho phép cập nhật thông tin chung của tour', 'ACTIVE'),
           ('DELETE_TOUR', 'Cho phép xóa tour du lịch', 'ACTIVE'),
+          ('VIEW_REPORT', 'Cho phép xem báo cáo', 'ACTIVE'),
+
 
           ('PROCESS_RELOCATE_BOOKING_REQUEST', 'Cho phép xử lý yêu cầu dời tour', 'ACTIVE')
      ) AS v(name, description, status)
