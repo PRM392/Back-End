@@ -303,14 +303,19 @@ public class VNPayServiceImpl implements VNPayService {
 
     @Transactional
     public String processPaymentResponse(Map<String, String> response) {
+        System.out.println("DEBUG VNPay Response: " + response);
         if (response.isEmpty()) {
-            throw new RuntimeException("Thiếu tham số");
+             return FAILED_URL + "?error=missing_params";
         }
         try {
             checkSum(response);
-            return buildPaymentStatus(response);
+            String resultUrl = buildPaymentStatus(response);
+            System.out.println("DEBUG Redirecting to: " + resultUrl);
+            return resultUrl;
         } catch (Exception e) {
-            throw new RuntimeException("Có lỗi xảy ra");
+            System.err.println("DEBUG VNPay Error: " + e.getMessage());
+            e.printStackTrace();
+            return FAILED_URL + "?error=checksum_failed";
         }
     }
 
@@ -384,13 +389,13 @@ public class VNPayServiceImpl implements VNPayService {
                 booking.setRemainingAmount(0L);
             }
 
-            returnUrl = SUCCESS_URL;
+            returnUrl = SUCCESS_URL + "?bookingCode=" + booking.getBookingCode();
         } else {
             // Update booking & transaction
             bookingStatus = BookingStatus.CANCELLED;
             transactionStatus = TransactionStatus.FAILED;
             logDescription = "Thanh toán thất bại";
-            returnUrl = FAILED_URL;
+            returnUrl = FAILED_URL + "?bookingCode=" + booking.getBookingCode();
         }
 
         transaction.setStatus(transactionStatus);

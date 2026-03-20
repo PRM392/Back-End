@@ -19,6 +19,7 @@ public interface ScheduleMapper {
 
     @Mapping(target = "tourId", source = "tour.tourId")
     @Mapping(target = "routeId", source = "route.routeId")
+    @Mapping(target = "departureAt", source = "departureAt")
     ScheduleResponse toResponse(Schedule schedule);
 
     @Mapping(target = "scheduleId", ignore = true)

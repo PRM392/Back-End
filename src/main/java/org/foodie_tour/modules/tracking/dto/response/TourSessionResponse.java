@@ -15,5 +15,11 @@ public class TourSessionResponse {
     private LocalDateTime startedAt;
     private LocalDateTime endedAt;
     private LocalDateTime createdAt;
+    private Long tourId;
+    private String tourTitle;
+    private String departureDate;
+    private String departureTime;
+    private Integer guests;
+    private String location;
     private List<CheckinLogResponse> checkinLogs;
 }

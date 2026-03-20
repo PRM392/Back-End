@@ -112,4 +112,14 @@ public class TourTrackingController {
             @RequestParam Long guideId) {
         return ResponseEntity.ok(tourTrackingService.getActiveSession(scheduleId, guideId));
     }
+
+    /**
+     * [9] Lấy tất cả phiên tour của guide
+     * GET /api/guide/tracking/assignments/{guideId}
+     */
+    @GetMapping("/assignments/{guideId}")
+    public ResponseEntity<List<TourSessionResponse>> getSessionsByGuideId(
+            @PathVariable Long guideId) {
+        return ResponseEntity.ok(tourTrackingService.getSessionsByGuideId(guideId));
+    }
 }

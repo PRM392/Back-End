@@ -1,4 +1,4 @@
-package org.foodie_tour.modules.tours.service.Impl;
+package org.foodie_tour.modules.tours.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.foodie_tour.common.exception.DuplicateResourceException;

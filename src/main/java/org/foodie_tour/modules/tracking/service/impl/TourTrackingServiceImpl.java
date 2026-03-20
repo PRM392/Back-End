@@ -156,6 +156,14 @@ public class TourTrackingServiceImpl implements TourTrackingService {
         return toSessionResponse(session);
     }
 
+    @Override
+    public List<TourSessionResponse> getSessionsByGuideId(Long guideId) {
+        return tourSessionRepository.findByGuide_EmployeeId(guideId)
+                .stream()
+                .map(this::toSessionResponse)
+                .toList();
+    }
+
     // ─── Helper ─────────────────────────────────────────────────────────────────
 
     private TourSession getActiveSessionEntity(Long sessionId) {
@@ -170,7 +178,24 @@ public class TourTrackingServiceImpl implements TourTrackingService {
     private TourSessionResponse toSessionResponse(TourSession session) {
         TourSessionResponse res = new TourSessionResponse();
         res.setSessionId(session.getSessionId());
-        res.setScheduleId(session.getSchedule().getScheduleId());
+        
+        org.foodie_tour.modules.schedules.entity.Schedule schedule = session.getSchedule();
+        if (schedule != null) {
+            res.setScheduleId(schedule.getScheduleId());
+            if (schedule.getTour() != null) {
+                res.setTourId(schedule.getTour().getTourId());
+                res.setTourTitle(schedule.getTour().getTourName());
+            }
+            if (schedule.getRoute() != null) res.setLocation(schedule.getRoute().getRouteName());
+            if (schedule.getDepartureAt() != null) {
+                res.setDepartureDate(schedule.getDepartureAt().toLocalDate().toString());
+                int hour = schedule.getDepartureAt().getHour();
+                int minute = schedule.getDepartureAt().getMinute();
+                res.setDepartureTime(String.format("%02d:%02d", hour, minute));
+            }
+            res.setGuests(schedule.getMaxPax());
+        }
+
         res.setGuideId(session.getGuide().getEmployeeId());
         res.setGuideName(session.getGuide().getEmployeeName());
         res.setSessionStatus(session.getSessionStatus().name());
