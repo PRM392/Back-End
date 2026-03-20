@@ -17,6 +17,7 @@ public interface BookingService {
     BookingResponse createBooking(BookingCreateRequest request);
     BookingResponse getBookingByCode(String id);
     List<BookingLogResponse> getLogsByBookingCode(String bookingId);
+    List<BookingResponse> getBookingsByEmail(String email);
     String generatePaymentUrl(long bookingId, HttpServletRequest servletRequest);
     String requestRelocateBooking(String bookingCode);
     void createRelocateBookingRequest(String token,  RelocateBookingRequest request);

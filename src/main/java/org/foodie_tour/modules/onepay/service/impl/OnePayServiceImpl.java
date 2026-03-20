@@ -54,7 +54,7 @@ public class OnePayServiceImpl implements OnePayService {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Đặt lịch không tồn tại"));
 
-        long amountToPay = booking.isDeposit() ? (long) (booking.getTotalPrice() * 0.3) : booking.getTotalPrice();
+        long amountToPay = Boolean.TRUE.equals(booking.getDeposit()) ? (long) (booking.getTotalPrice() * 0.3) : booking.getTotalPrice();
 
         TreeMap<String, String> vpcParams = new TreeMap<>();
         vpcParams.put("vpc_Version", "2");
@@ -139,7 +139,7 @@ public class OnePayServiceImpl implements OnePayService {
             }
         }
 
-        long amountPaidThisTime = booking.isDeposit() ? (long) (booking.getTotalPrice() * 0.3) : booking.getTotalPrice();
+        long amountPaidThisTime = Boolean.TRUE.equals(booking.getDeposit()) ? (long) (booking.getTotalPrice() * 0.3) : booking.getTotalPrice();
 
         Transactions transactions = Transactions.builder()
                 .booking(booking)
@@ -154,7 +154,7 @@ public class OnePayServiceImpl implements OnePayService {
         if (isSuccess) {
             booking.setBookingStatus(BookingStatus.COMPLETED);
             booking.setAmountPaid(amountPaidThisTime);
-            if (!booking.isDeposit()) {
+            if (!Boolean.TRUE.equals(booking.getDeposit())) {
                 booking.setRemainingAmount(0L);
             }
             bookingRepository.save(booking);

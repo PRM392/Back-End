@@ -96,8 +96,8 @@ public class Booking {
     @Enumerated(EnumType.STRING)
     PaymentMethod paymentMethod;
 
-    @Column(name = "is_deposit")
-    boolean deposit;
+    @Column(name = "is_deposit", nullable = true)
+    Boolean deposit;
 
     @Column(name = "amount_paid")
     Long amountPaid;

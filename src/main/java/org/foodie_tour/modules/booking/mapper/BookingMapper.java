@@ -27,7 +27,16 @@ public interface BookingMapper {
 
     @Mapping(target = "scheduleId", source = "schedule.scheduleId")
     @Mapping(target = "tourId", source = "tour.tourId")
+    @Mapping(target = "tourName", source = "tour.tourName")
     @Mapping(target = "routeId", source = "route.routeId")
     @Mapping(target = "departureTime", source = "schedule.departureAt")
+    @Mapping(target = "customerName", source = "customerName")
+    @Mapping(target = "customerEmail", source = "email")
+    @Mapping(target = "customerPhone", source = "phone")
+    @Mapping(target = "adultCount", source = "adultCount")
+    @Mapping(target = "childrenCount", source = "childrenCount")
+    @Mapping(target = "paymentMethod", source = "paymentMethod")
+    @Mapping(target = "createdAt", source = "createAt")
+    @Mapping(target = "updatedAt", source = "updateAt")
     BookingResponse toResponse(Booking booking);
 }

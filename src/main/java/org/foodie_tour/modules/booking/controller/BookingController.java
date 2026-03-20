@@ -40,6 +40,12 @@ public class BookingController {
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
+    @GetMapping("/user/my-bookings")
+    public ResponseEntity<List<BookingResponse>> getMyBookings(@RequestParam String email) {
+        var result = bookingService.getBookingsByEmail(email);
+        return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
+
     @GetMapping("/{bookingCode}/logs")
     public ResponseEntity<List<BookingLogResponse>> getLogsByBookingId(@PathVariable String bookingCode) {
         var result = bookingService.getLogsByBookingCode(bookingCode);

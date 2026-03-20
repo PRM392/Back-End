@@ -88,7 +88,7 @@ public class VNPayServiceImpl implements VNPayService {
         Booking booking = bookingRepository.findById(request.getBookingId())
                 .orElseThrow(() -> new ResourceNotFoundException("Đặt lịch không tồn tại"));
 
-        long expectedAmount = booking.isDeposit()
+        long expectedAmount = Boolean.TRUE.equals(booking.getDeposit())
                 ? (long) (booking.getTotalPrice() * 0.3)
                 : booking.getTotalPrice();
 
@@ -105,7 +105,7 @@ public class VNPayServiceImpl implements VNPayService {
         Booking booking = bookingRepository.findById(request.getBookingId())
                 .orElseThrow(() -> new ResourceNotFoundException("Đặt lịch không tồn tại"));
 
-        long finalPaymentAmount = booking.isDeposit()
+        long finalPaymentAmount = Boolean.TRUE.equals(booking.getDeposit())
                 ? (long) (booking.getTotalPrice() * 0.3)
                 : booking.getTotalPrice();
 
@@ -364,11 +364,11 @@ public class VNPayServiceImpl implements VNPayService {
                     return new ResourceNotFoundException("Đặt lịch không tồn tại");
                 });
 
-        System.out.println("Booking found: id=" + booking.getBookingId() + ", totalPrice=" + booking.getTotalPrice() + ", isDeposit=" + booking.isDeposit());
+        System.out.println("Booking found: id=" + booking.getBookingId() + ", totalPrice=" + booking.getTotalPrice() + ", isDeposit=" + booking.getDeposit());
 
         long amount = Long.parseLong(response.get("vnp_Amount")) / 100;
 
-        long expectedAmount = booking.isDeposit()
+        long expectedAmount = Boolean.TRUE.equals(booking.getDeposit())
                 ? (long) (booking.getTotalPrice() * 0.3)
                 : booking.getTotalPrice();
 
@@ -383,7 +383,7 @@ public class VNPayServiceImpl implements VNPayService {
         String vnpTransactionNo = response.get("vnp_TransactionNo");
 
         String returnUrl;
-        BookingStatus bookingStatus;
+        BookingStatus bookingStatus = BookingStatus.PENDING;  // Default
         TransactionStatus transactionStatus;
         String logDescription;
 
@@ -411,7 +411,6 @@ public class VNPayServiceImpl implements VNPayService {
 
         if (success) {
             // Update booking & transaction
-            bookingStatus = BookingStatus.COMPLETED;
             transactionStatus = TransactionStatus.SUCCESS;
             logDescription = "Thanh toán thành công";
 
@@ -423,12 +422,23 @@ public class VNPayServiceImpl implements VNPayService {
             });
 
             booking.setAmountPaid(amount);
-            if (!booking.isDeposit()) {
+            
+            // CHỈ set COMPLETED khi thanh toán đủ 100% (deposit=false)
+            // Deposit booking: giữ nguyên PENDING, chờ completeOnTourPayment
+            if (!Boolean.TRUE.equals(booking.getDeposit())) {
+                booking.setBookingStatus(BookingStatus.COMPLETED);
                 booking.setRemainingAmount(0L);
+                logDescription = "Thanh toán thành công";
+            } else {
+                // Deposit booking: giữ PENDING, amountPaid đã set ở trên
+                logDescription = "Thanh toán cọc 30% thành công - Còn nợ: " + (booking.getTotalPrice() - amount);
             }
 
             returnUrl = SUCCESS_URL;
-            System.out.println("SUCCESS branch: bookingStatus=COMPLETED, amountPaid=" + amount);
+            System.out.println("SUCCESS: deposit=" + booking.getDeposit() + ", bookingStatus=" + booking.getBookingStatus() + ", amountPaid=" + amount);
+            
+            // Gán bookingStatus sau khi đã set trong if/else trên
+            bookingStatus = booking.getBookingStatus();
         } else {
             // Update booking & transaction
             bookingStatus = BookingStatus.CANCELLED;
