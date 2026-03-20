@@ -58,6 +58,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -139,10 +140,10 @@ public class BookingServiceImpl implements BookingService {
 
         if (request.isDeposit()) {
             long depositAmount = (long) (totalPrice * 0.3); // 30% cọc
-            booking.setAmountPaid(0L);
+            booking.setAmountPaid(depositAmount);
             booking.setRemainingAmount(totalPrice - depositAmount);
         } else {
-            booking.setAmountPaid(0L);
+            booking.setAmountPaid(totalPrice);
             booking.setRemainingAmount(0L);
         }
 
@@ -184,7 +185,7 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Đặt lịch không tồn tại"));
 
-        long amountToPay = booking.isDeposit() ? (long) (booking.getTotalPrice() * 0.3) : booking.getTotalPrice();
+        long amountToPay = Boolean.TRUE.equals(booking.getDeposit()) ? (long) (booking.getTotalPrice() * 0.3) : booking.getTotalPrice();
         PaymentRequest request = new PaymentRequest(bookingId, amountToPay);
         bookingRepository.save(booking);
         if (booking.getPaymentMethod() == PaymentMethod.VNPAY) {
@@ -396,36 +397,69 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    public List<BookingResponse> getBookingsByEmail(String email) {
+        List<Booking> bookings = bookingRepository.findByEmailIgnoreCaseOrderByCreateAtDesc(email);
+        return bookings.stream()
+                .map(bookingMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     @Transactional
     public BookingResponse completeOnTourPayment(String bookingCode, PaymentMethod method) {
         Booking booking = findByBookingCode(bookingCode);
 
-        if (booking.getBookingStatus() != BookingStatus.COMPLETED) {
-            throw new InvalidateDataException("Booking phải ở trạng thái COMPLETED (đã cọc) mới có thể thanh toán nốt.");
+        // Deposit booking: cho phép PENDING hoặc CONFIRMED
+        // Full payment booking: phải COMPLETED
+        if (booking.getDeposit() == null || !booking.getDeposit()) {
+            if (booking.getBookingStatus() != BookingStatus.COMPLETED) {
+                throw new InvalidateDataException("Booking phải ở trạng thái COMPLETED (đã cọc) mới có thể thanh toán nốt.");
+            }
         }
 
         if (booking.getRemainingAmount() == 0) {
             throw new InvalidateDataException("Tour này đã được thanh toán đủ.");
         }
 
+        // Deposit booking: chỉ cần xác nhận cọc đã được thanh toán, giữ nguyên amountPaid
+        if (Boolean.TRUE.equals(booking.getDeposit()) && booking.getBookingStatus() == BookingStatus.PENDING) {
+            // Xác nhận cọc 30% đã thanh toán
+            booking.setBookingStatus(BookingStatus.COMPLETED);
+            BookingLog log = BookingLog.builder()
+                    .booking(booking)
+                    .description("Xác nhận đặt cọc 30% thành công bằng " + method)
+                    .bookingStatus(BookingStatus.COMPLETED)
+                    .build();
+            booking.getBookingLogs().add(log);
+
+            return bookingMapper.toResponse(bookingRepository.save(booking));
+        }
+
+        // Thanh toán phần còn lại 70%
+        Long paymentAmount = booking.getRemainingAmount();
+
         Transactions finalTrans = Transactions.builder()
                 .booking(booking)
-                .amount(booking.getRemainingAmount())
+                .amount(paymentAmount)
                 .paymentMethod(method)
                 .cashFlow(CashFlow.INCOME)
                 .status(TransactionStatus.SUCCESS)
                 .build();
         transactionsRepository.save(finalTrans);
 
-        booking.setAmountPaid(booking.getTotalPrice());
+        // Cập nhật số tiền đã thanh toán và số tiền còn lại
+        Long newAmountPaid = (booking.getAmountPaid() != null ? booking.getAmountPaid() : 0L) + paymentAmount;
+        booking.setAmountPaid(newAmountPaid);
         booking.setRemainingAmount(0L);
 
         BookingLog log = BookingLog.builder()
                 .booking(booking)
-                .description("Xác nhận On-tour: Khách đã thanh toán " + finalTrans.getAmount() + " bằng " + method)
-                .bookingStatus(booking.getBookingStatus())
+                .description("Xác nhận On-tour: Khách đã thanh toán " + paymentAmount + " bằng " + method)
+                .bookingStatus(BookingStatus.COMPLETED)
                 .build();
         booking.getBookingLogs().add(log);
+
+        booking.setBookingStatus(BookingStatus.COMPLETED);
 
         return bookingMapper.toResponse(bookingRepository.save(booking));
     }
