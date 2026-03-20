@@ -26,7 +26,7 @@ public class ScheduleController {
     private final ScheduleRepository scheduleRepository;
 
     @PostMapping("")
-    @PreAuthorize("hasAuthority('CREATE_SCHEDULE')")
+//    @PreAuthorize("hasAuthority('CREATE_SCHEDULE')")
     public ResponseEntity<ScheduleResponse> createSchedule(@RequestBody ScheduleRequest request) {
         ScheduleResponse response = scheduleService.createSchedule(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
