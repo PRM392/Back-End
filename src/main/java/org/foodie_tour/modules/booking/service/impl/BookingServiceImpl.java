@@ -273,6 +273,8 @@ public class BookingServiceImpl implements BookingService {
                 .build();
 
         relocateBookingRepository.save(entity);
+        updateBookingStatus(findByBookingCode(request.getBookingCode()), BookingStatus.RESCHEDULED,
+                "Đang chờ xử lý yêu cầu dời lịch trình mới");
     }
 
     @Transactional(readOnly = true)
@@ -431,4 +433,18 @@ public class BookingServiceImpl implements BookingService {
         return bookingMapper.toResponse(bookingRepository.save(booking));
     }
 
+    private void updateBookingStatus(Booking booking, BookingStatus newStatus, String description) {
+        if (booking.getBookingStatus() == newStatus) {
+            return;
+        }
+
+        booking.setBookingStatus(newStatus);
+        BookingLog log = BookingLog.builder()
+                .booking(booking)
+                .description(description)
+                .bookingStatus(newStatus)
+                .build();
+        booking.getBookingLogs().add(log);
+        bookingRepository.save(booking);
+    }
 }
