@@ -2,6 +2,7 @@ package org.foodie_tour.modules.booking.repository;
 
 import org.foodie_tour.modules.booking.entity.Booking;
 import org.foodie_tour.modules.booking.enums.BookingStatus;
+import org.foodie_tour.modules.schedules.entity.Schedule;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -41,4 +42,12 @@ public interface BookingRepository extends JpaRepository<Booking,Long>, JpaSpeci
                                           @Param(value = "to") LocalDateTime to,
                                           @Param(value = "status") BookingStatus status,
                                           Pageable pageable);
+
+    @Query("SELECT b FROM Booking b WHERE " +
+            "(:status IS NULL OR b.bookingStatus = :status) AND " +
+            "(:schedule IS NULL OR b.schedule = :schedule)")
+    List<Booking> findByStatusAndSchedule(
+            @Param("status") BookingStatus status,
+            @Param("schedule") Schedule schedule
+    );
 }
