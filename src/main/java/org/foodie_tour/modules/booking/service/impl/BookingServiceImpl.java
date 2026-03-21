@@ -170,6 +170,17 @@ public class BookingServiceImpl implements BookingService {
         return bookingMapper.toResponse(booking);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<BookingResponse> getAll(BookingStatus bookingStatus,Long scheduleId) {
+        Schedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new ResourceNotFoundException("Lịch trình không tồn tại"));;
+
+        return bookingRepository.findByStatusAndSchedule(bookingStatus, schedule).stream()
+                .map(bookingMapper::toResponse)
+                .toList();
+    }
+
     @Transactional(readOnly = true)
     public BookingResponse getBookingByCode(String bookingCode) {
         return bookingMapper.toResponse(findByBookingCode(bookingCode));
@@ -273,7 +284,8 @@ public class BookingServiceImpl implements BookingService {
                 .build();
 
         relocateBookingRepository.save(entity);
-        updateBookingStatus(findByBookingCode(request.getBookingCode()), BookingStatus.RESCHEDULED,
+        updateBookingStatus(findByBookingCode(request.getBookingCode()),
+                BookingStatus.RESCHEDULED,
                 "Đang chờ xử lý yêu cầu dời lịch trình mới");
     }
 
@@ -299,10 +311,11 @@ public class BookingServiceImpl implements BookingService {
             } else {
                 throw new ResourceNotFoundException("Lịch khởi hành không tồn tại");
             }
-            relocateBooking.setRelocateRequestStatus(RelocateRequestStatus.APPROVED);
+            updateBookingStatus(booking, BookingStatus.CONFIRMED, "Yêu cầu dời lịch trình được chấp thuận, booking trở về trạng thái đã xác nhận");
             bookingRepository.save(booking);
         } else {
             relocateBooking.setRelocateRequestStatus(RelocateRequestStatus.REJECTED);
+            updateBookingStatus(booking, BookingStatus.CONFIRMED, "Yêu cầu dời lịch trình bị từ chối, booking trở về trạng thái đã xác nhận");
         }
 
         relocateBookingRepository.save(relocateBooking);
