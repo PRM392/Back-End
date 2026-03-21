@@ -8,6 +8,7 @@ import org.foodie_tour.modules.report.dto.response.*;
 import org.foodie_tour.modules.report.dto.response.BookingReportResponse;
 import org.foodie_tour.modules.report.service.ReportService;
 import org.foodie_tour.modules.transaction.enums.CashFlow;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,10 +27,13 @@ import java.util.List;
 public class ReportController {
     ReportService reportService;
 
+
     @GetMapping
 //    @PreAuthorize("hasAuthority('VIEW_REPORT')")
-    public ResponseEntity<ReportResponse> generateReport(@RequestParam (value = "from", required = false) LocalDateTime from,
-                                                         @RequestParam (value = "to", required = false) LocalDateTime to) {
+    public ResponseEntity<ReportResponse> generateReport(
+            @RequestParam(value = "from", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime from,
+            @RequestParam(value = "to", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime to
+    ) {
         var result = reportService.generateReport(from, to);
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
@@ -37,8 +41,8 @@ public class ReportController {
     @GetMapping("/bookings")
 //    @PreAuthorize("hasAuthority('VIEW_REPORT')")
     public ResponseEntity<List<BookingReportResponse>> getBookingReport(
-            @RequestParam(value = "from", required = false) LocalDateTime from,
-            @RequestParam(value = "to", required = false) LocalDateTime to,
+            @RequestParam(value = "from", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime from,
+            @RequestParam(value = "to", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime to,
             @RequestParam(value = "page", defaultValue = "0") Integer page,
             @RequestParam(value = "status") BookingStatus status
     ) {
@@ -49,13 +53,12 @@ public class ReportController {
     @GetMapping("/transactions")
 //    @PreAuthorize("hasAuthority('VIEW_REPORT')")
     public ResponseEntity<List<TransactionReportResponse>> getTransactionReport(
-            @RequestParam(value = "from", required = false) LocalDateTime from,
-            @RequestParam(value = "to", required = false) LocalDateTime to,
+            @RequestParam(value = "from", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime from,
+            @RequestParam(value = "to", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime to,
             @RequestParam(value = "page", defaultValue = "0") Integer page,
             @RequestParam(value = "cashFlow") CashFlow cashFlow
     ) {
         var result = reportService.getTransactionReport(from, to, page, cashFlow);
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
-
 }
