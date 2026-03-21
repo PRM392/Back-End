@@ -19,27 +19,36 @@ public class BookingResponse {
     Long routeId;
     Long tourId;
     String tourName;
-    Long totalPrice;
     String pickupLocation;
     BookingStatus bookingStatus;
     LocalDateTime departureTime;
     boolean deposit;
-    Long amountPaid;
-    Long remainingAmount;
-    
+
     // Customer info
     String customerName;
     String customerEmail;
     String customerPhone;
-    
+
     // Passenger count
     int adultCount;
     int childrenCount;
-    
+    int numberOfPeople;
+
     // Payment info
     PaymentMethod paymentMethod;
     RefundStatus paymentStatus;
-    
+
+    // Payment summary (useful for frontend display)
+    Long totalPrice;
+    Long amountPaid;
+    Long remainingAmount;
+    Long depositAmount;
+    Long remainingPercent;
+
+    // Computed status text for display
+    String paymentStatusText;
+    String bookingStatusText;
+
     // Timestamps
     LocalDateTime createdAt;
     LocalDateTime updatedAt;

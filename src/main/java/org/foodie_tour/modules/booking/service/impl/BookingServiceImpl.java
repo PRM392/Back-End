@@ -137,14 +137,15 @@ public class BookingServiceImpl implements BookingService {
         long childPrice = tour.getBasePriceChild() * request.getChildrenCount();
         long totalPrice = adultPrice + childPrice;
         booking.setTotalPrice(adultPrice + childPrice);
+        booking.setAmountPaid(0L);
+        booking.setRemainingAmount(0L);
 
         if (request.isDeposit()) {
             long depositAmount = (long) (totalPrice * 0.3); // 30% cọc
-            booking.setAmountPaid(depositAmount);
             booking.setRemainingAmount(totalPrice - depositAmount);
+            booking.setBookingStatus(BookingStatus.PENDING); // Chờ cọc 30%
         } else {
-            booking.setAmountPaid(totalPrice);
-            booking.setRemainingAmount(0L);
+            booking.setBookingStatus(BookingStatus.PENDING); // Chờ thanh toán đủ
         }
 
         String bookingCode = RandomCode.generateRandomCode(10);
@@ -397,42 +398,17 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingResponse> getBookingsByEmail(String email) {
-        List<Booking> bookings = bookingRepository.findByEmailIgnoreCaseOrderByCreateAtDesc(email);
-        return bookings.stream()
-                .map(bookingMapper::toResponse)
-                .collect(Collectors.toList());
-    }
-
-    @Override
     @Transactional
     public BookingResponse completeOnTourPayment(String bookingCode, PaymentMethod method) {
         Booking booking = findByBookingCode(bookingCode);
 
-        // Deposit booking: cho phép PENDING hoặc CONFIRMED
-        // Full payment booking: phải COMPLETED
-        if (booking.getDeposit() == null || !booking.getDeposit()) {
-            if (booking.getBookingStatus() != BookingStatus.COMPLETED) {
-                throw new InvalidateDataException("Booking phải ở trạng thái COMPLETED (đã cọc) mới có thể thanh toán nốt.");
-            }
+        // Chỉ booking đã cọc 30% (DEPOSIT_PAID) mới được thanh toán 70% còn lại
+        if (booking.getBookingStatus() != BookingStatus.DEPOSIT_PAID) {
+            throw new InvalidateDataException("Booking phải ở trạng thái DEPOSIT_PAID (đã cọc) mới có thể thanh toán nốt.");
         }
 
-        if (booking.getRemainingAmount() == 0) {
+        if (booking.getRemainingAmount() == null || booking.getRemainingAmount() == 0) {
             throw new InvalidateDataException("Tour này đã được thanh toán đủ.");
-        }
-
-        // Deposit booking: chỉ cần xác nhận cọc đã được thanh toán, giữ nguyên amountPaid
-        if (Boolean.TRUE.equals(booking.getDeposit()) && booking.getBookingStatus() == BookingStatus.PENDING) {
-            // Xác nhận cọc 30% đã thanh toán
-            booking.setBookingStatus(BookingStatus.COMPLETED);
-            BookingLog log = BookingLog.builder()
-                    .booking(booking)
-                    .description("Xác nhận đặt cọc 30% thành công bằng " + method)
-                    .bookingStatus(BookingStatus.COMPLETED)
-                    .build();
-            booking.getBookingLogs().add(log);
-
-            return bookingMapper.toResponse(bookingRepository.save(booking));
         }
 
         // Thanh toán phần còn lại 70%
@@ -454,7 +430,7 @@ public class BookingServiceImpl implements BookingService {
 
         BookingLog log = BookingLog.builder()
                 .booking(booking)
-                .description("Xác nhận On-tour: Khách đã thanh toán " + paymentAmount + " bằng " + method)
+                .description("Xác nhận thanh toán 70% còn lại: " + paymentAmount + " bằng " + method + " - Admin xác nhận")
                 .bookingStatus(BookingStatus.COMPLETED)
                 .build();
         booking.getBookingLogs().add(log);
@@ -462,6 +438,101 @@ public class BookingServiceImpl implements BookingService {
         booking.setBookingStatus(BookingStatus.COMPLETED);
 
         return bookingMapper.toResponse(bookingRepository.save(booking));
+    }
+
+    @Override
+    @Transactional
+    public BookingResponse confirmVnpayPaymentSuccess(String bookingCode) {
+        Booking booking = findByBookingCode(bookingCode);
+
+        // Kiểm tra booking đang ở trạng thái PENDING (chưa thanh toán)
+        if (booking.getBookingStatus() != BookingStatus.PENDING) {
+            // Nếu đã thanh toán rồi thì trả về booking hiện tại (idempotent)
+            if (booking.getAmountPaid() != null && booking.getAmountPaid() > 0) {
+                return bookingMapper.toResponse(booking);
+            }
+            throw new InvalidateDataException("Booking không ở trạng thái chờ thanh toán.");
+        }
+
+        // Tính số tiền cần cọc 30%
+        long expectedDeposit = Boolean.TRUE.equals(booking.getDeposit())
+                ? (long) (booking.getTotalPrice() * 0.3)
+                : booking.getTotalPrice();
+
+        // Cập nhật amountPaid
+        booking.setAmountPaid(expectedDeposit);
+
+        // Tạo transaction
+        Transactions transaction = Transactions.builder()
+                .booking(booking)
+                .amount(expectedDeposit)
+                .paymentMethod(PaymentMethod.VNPAY)
+                .cashFlow(CashFlow.INCOME)
+                .status(TransactionStatus.SUCCESS)
+                .build();
+        transactionsRepository.save(transaction);
+
+        // Tạo booking log
+        String logDesc = Boolean.TRUE.equals(booking.getDeposit())
+                ? "Thanh toán cọc 30% (" + expectedDeposit + ") qua VNPAY thành công. Còn nợ: " + (booking.getTotalPrice() - expectedDeposit)
+                : "Thanh toán đủ (" + expectedDeposit + ") qua VNPAY thành công.";
+
+        BookingLog log = BookingLog.builder()
+                .booking(booking)
+                .description(logDesc)
+                .bookingStatus(BookingStatus.PENDING)
+                .build();
+        bookingLogRepository.save(log);
+
+        // Cập nhật trạng thái booking
+        if (Boolean.TRUE.equals(booking.getDeposit())) {
+            booking.setBookingStatus(BookingStatus.DEPOSIT_PAID);
+            booking.setRemainingAmount(booking.getTotalPrice() - expectedDeposit);
+        } else {
+            booking.setBookingStatus(BookingStatus.COMPLETED);
+            booking.setRemainingAmount(0L);
+        }
+
+        return bookingMapper.toResponse(bookingRepository.save(booking));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BookingResponse> getAllBookings(String status, String email, String fromDate, String toDate) {
+        List<Booking> bookings = bookingRepository.findAll();
+        
+        return bookings.stream()
+                .filter(b -> {
+                    // Filter by status
+                    if (status != null && !status.isBlank()) {
+                        try {
+                            BookingStatus bookingStatus = BookingStatus.valueOf(status.toUpperCase());
+                            if (b.getBookingStatus() != bookingStatus) return false;
+                        } catch (IllegalArgumentException ignored) {}
+                    }
+                    // Filter by email
+                    if (email != null && !email.isBlank()) {
+                        if (!b.getEmail().equalsIgnoreCase(email)) return false;
+                    }
+                    // Filter by date range
+                    if (fromDate != null && !fromDate.isBlank()) {
+                        java.time.LocalDate from = java.time.LocalDate.parse(fromDate);
+                        if (b.getCreateAt() != null && b.getCreateAt().toLocalDate().isBefore(from)) return false;
+                    }
+                    if (toDate != null && !toDate.isBlank()) {
+                        java.time.LocalDate to = java.time.LocalDate.parse(toDate);
+                        if (b.getCreateAt() != null && b.getCreateAt().toLocalDate().isAfter(to)) return false;
+                    }
+                    return true;
+                })
+                .sorted((a, b) -> {
+                    if (a.getCreateAt() == null && b.getCreateAt() == null) return 0;
+                    if (a.getCreateAt() == null) return 1;
+                    if (b.getCreateAt() == null) return -1;
+                    return b.getCreateAt().compareTo(a.getCreateAt()); // Mới nhất trước
+                })
+                .map(bookingMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
 }

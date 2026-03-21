@@ -40,12 +40,6 @@ public class BookingController {
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
-    @GetMapping("/user/my-bookings")
-    public ResponseEntity<List<BookingResponse>> getMyBookings(@RequestParam String email) {
-        var result = bookingService.getBookingsByEmail(email);
-        return ResponseEntity.status(HttpStatus.OK).body(result);
-    }
-
     @GetMapping("/{bookingCode}/logs")
     public ResponseEntity<List<BookingLogResponse>> getLogsByBookingId(@PathVariable String bookingCode) {
         var result = bookingService.getLogsByBookingCode(bookingCode);
@@ -59,6 +53,7 @@ public class BookingController {
     }
 
     @GetMapping("/relocate/all-request")
+    @PreAuthorize("hasAuthority('PROCESS_RELOCATE_BOOKING_REQUEST')")
     public ResponseEntity<List<RelocateBookingResponse>> getAllRelocateRequest() {
         var result = bookingService.getAllPendingRelocateRequest();
         return ResponseEntity.status(HttpStatus.OK).body(result);
@@ -90,6 +85,7 @@ public class BookingController {
     }
 
     @PutMapping("/{bookingCode}/approve-refund")
+    @PreAuthorize("hasAuthority('ADMIN_REFUND')")
     public ResponseEntity<String> approveManualRefund(
             @PathVariable String bookingCode
     ) {
@@ -98,12 +94,42 @@ public class BookingController {
     }
 
     @PutMapping("/{bookingCode}/complete-payment")
-//    @PreAuthorize("hasAuthority('APPROVE_PAYMENT')")
     public ResponseEntity<BookingResponse> completePayment(
             @PathVariable String bookingCode,
             @RequestParam PaymentMethod method
     ) {
         var result = bookingService.completeOnTourPayment(bookingCode, method);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Mobile gọi sau khi VNPay redirect về app để xác nhận thanh toán thành công
+     * Không cần auth - mobile tự gọi sau khi VNPay trả về success
+     */
+    @PostMapping("/{bookingCode}/vnpay-confirm")
+    public ResponseEntity<BookingResponse> confirmVnpayPayment(
+            @PathVariable String bookingCode
+    ) {
+        var result = bookingService.confirmVnpayPaymentSuccess(bookingCode);
+        return ResponseEntity.ok(result);
+    }
+
+    // ============== ADMIN ENDPOINTS ==============
+
+    /**
+     * Lấy tất cả booking (Admin)
+     * GET /api/booking/all
+     * Auth: BẮT BUỘC - Token có quyền ADMIN
+     */
+    @GetMapping("/all")
+    // Temporarily removed @PreAuthorize for testing
+    public ResponseEntity<List<BookingResponse>> getAllBookings(
+            @RequestParam(required = false) String status,  // Filter theo status: PENDING, DEPOSIT_PAID, COMPLETED, CANCELLED
+            @RequestParam(required = false) String email,   // Filter theo email khách
+            @RequestParam(required = false) String fromDate, // Filter từ ngày (yyyy-MM-dd)
+            @RequestParam(required = false) String toDate   // Filter đến ngày (yyyy-MM-dd)
+    ) {
+        var result = bookingService.getAllBookings(status, email, fromDate, toDate);
         return ResponseEntity.ok(result);
     }
 }

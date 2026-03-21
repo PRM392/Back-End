@@ -11,21 +11,10 @@
     <groupId>org.quochung</groupId>
     <artifactId>Foodie_Tour</artifactId>
     <version>0.0.1-SNAPSHOT</version>
+    <!-- Spring Boot app phải là jar, không phải pom (pom chỉ dùng cho parent/aggregator không có src) -->
+    <packaging>jar</packaging>
     <name>Foodie_Tour</name>
     <description>Foodie_Tour</description>
-    <url/>
-    <licenses>
-        <license/>
-    </licenses>
-    <developers>
-        <developer/>
-    </developers>
-    <scm>
-        <connection/>
-        <developerConnection/>
-        <tag/>
-        <url/>
-    </scm>
     <properties>
         <java.version>21</java.version>
         <org.mapstruct.version>1.6.3</org.mapstruct.version>

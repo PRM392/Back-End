@@ -36,7 +36,11 @@ FROM (VALUES
           ('UPDATE_TOUR', 'Cho phép cập nhật thông tin chung của tour', 'ACTIVE'),
           ('DELETE_TOUR', 'Cho phép xóa tour du lịch', 'ACTIVE'),
 
-          ('PROCESS_RELOCATE_BOOKING_REQUEST', 'Cho phép xử lý yêu cầu dời tour', 'ACTIVE')
+          ('PROCESS_RELOCATE_BOOKING_REQUEST', 'Cho phép xử lý yêu cầu dời tour', 'ACTIVE'),
+
+          ('ADMIN_VIEW_BOOKING', 'Cho phép admin xem danh sách tất cả booking', 'ACTIVE'),
+          ('ADMIN_CONFIRM_PAYMENT', 'Cho phép admin xác nhận thanh toán', 'ACTIVE'),
+          ('ADMIN_REFUND', 'Cho phép admin hoàn tiền booking', 'ACTIVE')
      ) AS v(name, description, status)
 WHERE NOT EXISTS (
     SELECT 1 FROM public.permission p WHERE p.name = v.name

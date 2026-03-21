@@ -152,13 +152,18 @@ public class OnePayServiceImpl implements OnePayService {
         transactionsRepository.save(transactions);
 
         if (isSuccess) {
-            booking.setBookingStatus(BookingStatus.COMPLETED);
             booking.setAmountPaid(amountPaidThisTime);
-            if (!Boolean.TRUE.equals(booking.getDeposit())) {
+            // Deposit booking: set DEPOSIT_PAID để khách biết đã cọc, chờ thanh toán 70% còn lại
+            if (Boolean.TRUE.equals(booking.getDeposit())) {
+                booking.setBookingStatus(BookingStatus.DEPOSIT_PAID);
+                booking.setRemainingAmount(booking.getTotalPrice() - amountPaidThisTime);
+                createBookingLog(booking, "Thanh toán cọc 30% thành công - Còn nợ: " + (booking.getTotalPrice() - amountPaidThisTime));
+            } else {
+                booking.setBookingStatus(BookingStatus.COMPLETED);
                 booking.setRemainingAmount(0L);
+                createBookingLog(booking, "Thanh toán Visa thành công");
             }
             bookingRepository.save(booking);
-            createBookingLog(booking, "Thanh toán Visa thành công");
 
             customerBookingRepository.findByBooking(booking).ifPresent(customerBooking -> {
                 var customer = customerBooking.getCustomer();

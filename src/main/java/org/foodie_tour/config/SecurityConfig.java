@@ -93,6 +93,7 @@ public class SecurityConfig {
     public JwtAuthenticationConverter converter() {
         JwtGrantedAuthoritiesConverter grandConverter = new JwtGrantedAuthoritiesConverter();
         grandConverter.setAuthorityPrefix("");
+        grandConverter.setAuthoritiesClaimName("scope");
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
         converter.setJwtGrantedAuthoritiesConverter(grandConverter);
         return converter;

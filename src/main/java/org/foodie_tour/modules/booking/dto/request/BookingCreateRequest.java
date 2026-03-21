@@ -9,7 +9,6 @@ import lombok.experimental.FieldDefaults;
 import org.foodie_tour.modules.booking.enums.PaymentMethod;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -19,7 +18,7 @@ import java.time.LocalDateTime;
 public class BookingCreateRequest {
     long tourId;
     long scheduleId;
-    private LocalDate departureDate;
+    LocalDate departureDate;
     String customerName;
     String email;
     String phone;
@@ -29,5 +28,4 @@ public class BookingCreateRequest {
     String customerNote;
     boolean deposit;
     PaymentMethod paymentMethod;
-
 }

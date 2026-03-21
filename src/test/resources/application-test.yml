@@ -1,0 +1,70 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: FoodieTour
+  threads:
+    virtual:
+      enabled: true
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: test@example.com
+    password: testpassword
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/foodie_tour?options=-c%20TimeZone=Asia/Ho_Chi_Minh
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    database: POSTGRESQL
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+aws:
+  s3:
+    region: us-east-1
+    bucket: foodie-tour-bucket
+    access-key: test-access-key
+    secret-key: test-secret-key
+
+vnpay:
+  tmn-code: TEST_TMN
+  hash-secret: TEST_HASH_SECRET
+  payment-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+  return-url: http://localhost:8080/api/payment/vnpay/return
+  ipn-url: http://localhost:8080/api/payment/vnpay/ipn
+  expired-time: 15
+  payment-success-url: vietvibe://payment/result
+  payment-failed-url: vietvibe://payment/result
+
+onepay:
+  merchant-id: TEST_MERCHANT
+  access-code: TEST_ACCESS_CODE
+  hash-secret: TEST_HASH_SECRET
+  return-url: http://localhost:8080/api/payment/onepay/return
+  payment-url: https://test.oppwa.com/v1/payment
+  payment-success-url: vietvibe://payment/result
+  payment-failed-url: vietvibe://payment/result
+
+auth:
+  key: test-secret-key-for-jwt-authentication-minimum-256-bits-required
+  issuer: FoodieTour

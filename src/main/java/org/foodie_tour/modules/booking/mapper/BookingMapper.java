@@ -38,5 +38,10 @@ public interface BookingMapper {
     @Mapping(target = "paymentMethod", source = "paymentMethod")
     @Mapping(target = "createdAt", source = "createAt")
     @Mapping(target = "updatedAt", source = "updateAt")
+    @Mapping(target = "depositAmount", expression = "java(booking.getDeposit() != null && booking.getDeposit() ? (long)(booking.getTotalPrice() * 0.3) : 0L)")
+    @Mapping(target = "remainingPercent", expression = "java(booking.getTotalPrice() != null && booking.getTotalPrice() > 0 ? (long)((booking.getRemainingAmount() != null ? booking.getRemainingAmount() : 0L) * 100 / booking.getTotalPrice()) : 0L)")
+    @Mapping(target = "numberOfPeople", expression = "java(booking.getAdultCount() + booking.getChildrenCount())")
+    @Mapping(target = "paymentStatusText", expression = "java((booking.getRemainingAmount() == null || booking.getRemainingAmount() == 0) ? \"Đã thanh toán đủ\" : \"Đã thanh toán \" + ((booking.getTotalPrice() > 0) ? (booking.getAmountPaid() * 100 / booking.getTotalPrice()) : 0) + \"%\")")
+    @Mapping(target = "bookingStatusText", expression = "java((booking.getBookingStatus() == null) ? \"\" : booking.getBookingStatus().name())")
     BookingResponse toResponse(Booking booking);
 }

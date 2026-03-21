@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: ${APPLICATION_NAME}
+    name: FoodieTour
   threads:
     virtual:
       enabled: true
@@ -33,18 +33,25 @@ spring:
     database: POSTGRESQL
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto:  update
+      ddl-auto: update
     show-sql: false
     properties:
       hibernate:
         format_sql: false
-#  sql:
-#    init:
-#      mode: always
-#      data-locations:
-#        - classpath:rbac/insert-role.sql
-#        - classpath:rbac/insert-permission.sql
-#        - classpath:rbac/insert-role-permission.sql
+
+  sql:
+    init:
+      mode: always
+      data-locations:
+        - classpath:rbac/insert-role.sql
+        - classpath:rbac/insert-permission.sql
+        - classpath:rbac/insert-role-permission.sql
+        - classpath:add_booking_permissions.sql
+        - classpath:fix_booking_status_constraint.sql
+        - classpath:insert_tours.sql
+        - classpath:insert_tours_v2.sql
+        - classpath:insert_schedules.sql
+      continue-on-error: true
 
 aws:
   s3:

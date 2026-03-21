@@ -14,6 +14,7 @@ import org.foodie_tour.modules.booking.entity.Booking;
 import org.foodie_tour.modules.booking.entity.BookingLog;
 import org.foodie_tour.modules.booking.enums.BookingStatus;
 import org.foodie_tour.modules.booking.enums.PaymentMethod;
+import org.foodie_tour.modules.booking.repository.BookingLogRepository;
 import org.foodie_tour.modules.booking.repository.BookingRepository;
 import org.foodie_tour.modules.customer.entity.Customer;
 import org.foodie_tour.modules.customer.entity.CustomerBooking;
@@ -50,6 +51,7 @@ public class VNPayServiceImpl implements VNPayService {
     private final TransactionsRepository transactionsRepository;
     private final CustomerBookingRepository customerBookingRepository;
     private final CustomerRepository customerRepository;
+    private final BookingLogRepository bookingLogRepository;
 
     @Value("${vnpay.expired-time}")
     @NonFinal
@@ -402,17 +404,9 @@ public class VNPayServiceImpl implements VNPayService {
         transactionsRepository.save(transaction);
         System.out.println("Transaction saved");
 
-        // Create log
-        BookingLog log = BookingLog.builder()
-                .booking(booking)
-                .build();
-
-        booking.getBookingLogs().add(log);
-
         if (success) {
             // Update booking & transaction
             transactionStatus = TransactionStatus.SUCCESS;
-            logDescription = "Thanh toán thành công";
 
             // Update customer
             customerBookingRepository.findByBooking(booking).ifPresent(cb -> {
@@ -423,21 +417,19 @@ public class VNPayServiceImpl implements VNPayService {
 
             booking.setAmountPaid(amount);
             
-            // CHỈ set COMPLETED khi thanh toán đủ 100% (deposit=false)
-            // Deposit booking: giữ nguyên PENDING, chờ completeOnTourPayment
-            if (!Boolean.TRUE.equals(booking.getDeposit())) {
+            // Deposit booking: set DEPOSIT_PAID để khách biết đã cọc, chờ thanh toán 70% còn lại
+            if (Boolean.TRUE.equals(booking.getDeposit())) {
+                booking.setBookingStatus(BookingStatus.DEPOSIT_PAID);
+                booking.setRemainingAmount(booking.getTotalPrice() - amount);
+                logDescription = "Thanh toán cọc 30% thành công - Còn nợ: " + (booking.getTotalPrice() - amount);
+            } else {
                 booking.setBookingStatus(BookingStatus.COMPLETED);
                 booking.setRemainingAmount(0L);
                 logDescription = "Thanh toán thành công";
-            } else {
-                // Deposit booking: giữ PENDING, amountPaid đã set ở trên
-                logDescription = "Thanh toán cọc 30% thành công - Còn nợ: " + (booking.getTotalPrice() - amount);
             }
 
             returnUrl = SUCCESS_URL;
             System.out.println("SUCCESS: deposit=" + booking.getDeposit() + ", bookingStatus=" + booking.getBookingStatus() + ", amountPaid=" + amount);
-            
-            // Gán bookingStatus sau khi đã set trong if/else trên
             bookingStatus = booking.getBookingStatus();
         } else {
             // Update booking & transaction
@@ -451,8 +443,14 @@ public class VNPayServiceImpl implements VNPayService {
         transaction.setStatus(transactionStatus);
         booking.setBookingStatus(bookingStatus);
 
-        log.setDescription(logDescription);
-        log.setBookingStatus(bookingStatus);
+        // Create and save log AFTER determining status
+        BookingLog log = BookingLog.builder()
+                .booking(booking)
+                .description(logDescription)
+                .bookingStatus(bookingStatus)
+                .build();
+        bookingLogRepository.save(log);
+        System.out.println("BookingLog saved");
 
         bookingRepository.save(booking);
         System.out.println("Booking SAVED: status=" + booking.getBookingStatus() + ", amountPaid=" + booking.getAmountPaid());

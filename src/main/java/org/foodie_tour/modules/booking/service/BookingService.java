@@ -17,7 +17,6 @@ public interface BookingService {
     BookingResponse createBooking(BookingCreateRequest request);
     BookingResponse getBookingByCode(String id);
     List<BookingLogResponse> getLogsByBookingCode(String bookingId);
-    List<BookingResponse> getBookingsByEmail(String email);
     String generatePaymentUrl(long bookingId, HttpServletRequest servletRequest);
     String requestRelocateBooking(String bookingCode);
     void createRelocateBookingRequest(String token,  RelocateBookingRequest request);
@@ -26,4 +25,8 @@ public interface BookingService {
     String cancelBooking(BookingCancelRequest request);
     String approveManualRefund(String bookingCode);
     BookingResponse completeOnTourPayment(String bookingCode, PaymentMethod method);
+    BookingResponse confirmVnpayPaymentSuccess(String bookingCode);
+    
+    // Admin endpoints
+    List<BookingResponse> getAllBookings(String status, String email, String fromDate, String toDate);
 }

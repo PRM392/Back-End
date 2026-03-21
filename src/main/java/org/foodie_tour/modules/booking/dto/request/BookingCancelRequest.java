@@ -1,12 +1,15 @@
 package org.foodie_tour.modules.booking.dto.request;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class BookingCancelRequest {
-    private String bookingCode;
-    private String email;
-    private String cancellationReason;
+    String bookingCode;
+    String email;
+    String cancellationReason;
 }
