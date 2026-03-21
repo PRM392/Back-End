@@ -16,4 +16,7 @@ public class CheckPointResponse {
     private String description;
     private int durationAtLocation;
     private CheckPointType type;
+    private String ggmapUrl;
+    private String mainImage;
+    private List<String> imageUrls;
 }

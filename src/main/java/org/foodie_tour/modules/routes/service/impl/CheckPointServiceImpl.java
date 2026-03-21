@@ -75,10 +75,11 @@ public class CheckPointServiceImpl implements CheckPointService {
 
     @Override
     public List<CheckPointResponse> getCheckpointsByTourId(Long tourId) {
-        Tour tour = tourRepository.findById(tourId)
-                .orElseThrow(() -> new ResourceNotFoundException("Tour không tồn tại"));
+        if (!tourRepository.existsById(tourId)) {
+            throw new ResourceNotFoundException("Tour không tồn tại");
+        }
 
-        Optional<CheckPoint> checkPoints = checkPointRepository.findWithImagesByCheckpointId(tourId);
+        List<CheckPoint> checkPoints = checkPointRepository.findByTour_TourId(tourId);
         return checkPoints.stream()
                 .map(checkPointMapper::toResponse)
                 .toList();

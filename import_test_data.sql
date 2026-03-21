@@ -21,9 +21,13 @@ SET password = (SELECT password FROM public.employee WHERE email = 'felixiter.tr
 WHERE email IN ('guide@test.com');
 
 -- 3. TOURS
-INSERT INTO public.tours (tour_name, tour_description, duration, base_price_adult, base_price_child, tour_type, tour_status, is_customizable, created_at, updated_at)
-SELECT 'Hanoi Street Food Tour', 'Explore the best hidden gems of Hanoi old quarter', 4, 350000, 200000, 'GROUP', 'ACTIVE', false, NOW(), NOW()
+INSERT INTO public.tours (tour_name, tour_description, duration, base_price_adult, base_price_child, tour_type, tour_status, is_customizable, total_custom_places, min_food_places, min_visit_places, created_at, updated_at)
+SELECT 'Hanoi Street Food Tour', 'Explore the best hidden gems of Hanoi old quarter', 4, 350000, 200000, 'GROUP', 'ACTIVE', true, 3, 1, 1, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM public.tours WHERE tour_name = 'Hanoi Street Food Tour');
+
+UPDATE public.tours 
+SET is_customizable = true, total_custom_places = 3, min_food_places = 1, min_visit_places = 1
+WHERE tour_name = 'Hanoi Street Food Tour';
 
 -- 4. ROUTES
 INSERT INTO public.routes (route_name, tour_id, route_status, created_at, updated_at)
@@ -32,21 +36,32 @@ FROM public.tours WHERE tour_name = 'Hanoi Street Food Tour'
   AND NOT EXISTS (SELECT 1 FROM public.routes WHERE route_name = 'Old Quarter Food Loop');
 
 -- 5. CHECKPOINTS
-INSERT INTO public.checkpoints (tour_id, location_name, description, duration_at_location, checkpoint_type, created_at, updated_at)
-SELECT tour_id, 'Dong Xuan Market', 'Start point and snack time', 30, 'FOOD', NOW(), NOW() 
+INSERT INTO public.checkpoints (tour_id, location_name, description, duration_at_location, checkpoint_type, ggmap_url, created_at, updated_at)
+SELECT tour_id, 'Dong Xuan Market', 'Start point and snack time', 30, 'FOOD', 'https://www.google.com/maps/place//@21.0381,105.8465,17z/', NOW(), NOW() 
 FROM public.tours WHERE tour_name = 'Hanoi Street Food Tour'
   AND NOT EXISTS (SELECT 1 FROM public.checkpoints WHERE location_name = 'Dong Xuan Market');
 
 -- 6. Add more Checkpoints
-INSERT INTO public.checkpoints (tour_id, location_name, description, duration_at_location, checkpoint_type, created_at, updated_at)
-SELECT tour_id, 'Long Bien Bridge', 'Sightseeing and photos', 20, 'VISIT', NOW(), NOW() 
+INSERT INTO public.checkpoints (tour_id, location_name, description, duration_at_location, checkpoint_type, ggmap_url, created_at, updated_at)
+SELECT tour_id, 'Long Bien Bridge', 'Sightseeing and photos', 20, 'VISIT', 'https://www.google.com/maps/place//@21.0401,105.8569,17z/', NOW(), NOW() 
 FROM public.tours WHERE tour_name = 'Hanoi Street Food Tour'
   AND NOT EXISTS (SELECT 1 FROM public.checkpoints WHERE location_name = 'Long Bien Bridge');
 
-INSERT INTO public.checkpoints (tour_id, location_name, description, duration_at_location, checkpoint_type, created_at, updated_at)
-SELECT tour_id, 'Beer Street', 'Dinner and local drinks', 60, 'FOOD', NOW(), NOW() 
+INSERT INTO public.checkpoints (tour_id, location_name, description, duration_at_location, checkpoint_type, ggmap_url, created_at, updated_at)
+SELECT tour_id, 'Beer Street', 'Dinner and local drinks', 60, 'FOOD', 'https://www.google.com/maps/place//@21.0345,105.8533,17z/', NOW(), NOW() 
 FROM public.tours WHERE tour_name = 'Hanoi Street Food Tour'
   AND NOT EXISTS (SELECT 1 FROM public.checkpoints WHERE location_name = 'Beer Street');
+
+-- Add DEMO points with real URLs for testing
+INSERT INTO public.checkpoints (tour_id, location_name, description, duration_at_location, checkpoint_type, ggmap_url, created_at, updated_at)
+SELECT tour_id, 'Hoan Kiem Lake', 'Heart of the city', 30, 'VISIT', 'https://www.google.com/maps/place//@21.0285,105.8521,17z/', NOW(), NOW() 
+FROM public.tours WHERE tour_name = 'Hanoi Street Food Tour'
+  AND NOT EXISTS (SELECT 1 FROM public.checkpoints WHERE location_name = 'Hoan Kiem Lake');
+
+INSERT INTO public.checkpoints (tour_id, location_name, description, duration_at_location, checkpoint_type, ggmap_url, created_at, updated_at)
+SELECT tour_id, 'Temple of Literature', 'Historical site', 45, 'VISIT', 'https://www.google.com/maps/place//@21.0294,105.8355,17z/', NOW(), NOW() 
+FROM public.tours WHERE tour_name = 'Hanoi Street Food Tour'
+  AND NOT EXISTS (SELECT 1 FROM public.checkpoints WHERE location_name = 'Temple of Literature');
 
 -- 7. LINK CHECKPOINTS (RouteCheckpoint)
 INSERT INTO public.route_checkpoints (route_id, checkpoint_id, "order", route_checkpoint_status, created_at, updated_at)

@@ -14,6 +14,9 @@ public interface TourSessionRepository extends JpaRepository<TourSession, Long> 
     Optional<TourSession> findBySchedule_ScheduleIdAndGuide_EmployeeIdAndSessionStatus(
             Long scheduleId, Long guideId, TourSessionStatus status);
 
+    Optional<TourSession> findFirstByGuide_EmployeeIdAndSessionStatus(
+            Long guideId, TourSessionStatus status);
+
     List<TourSession> findByGuide_EmployeeId(Long guideId);
 
     List<TourSession> findBySchedule_ScheduleId(Long scheduleId);

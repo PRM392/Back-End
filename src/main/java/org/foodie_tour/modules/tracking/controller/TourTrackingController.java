@@ -108,7 +108,7 @@ public class TourTrackingController {
      */
     @GetMapping("/active")
     public ResponseEntity<TourSessionResponse> getActiveSession(
-            @RequestParam Long scheduleId,
+            @RequestParam(required = false) Long scheduleId,
             @RequestParam Long guideId) {
         return ResponseEntity.ok(tourTrackingService.getActiveSession(scheduleId, guideId));
     }
