@@ -6,17 +6,46 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class MailSampleText {
-    public static String CREATE_EMPLOYEE_TITLE = "Tài khoản nhân viên đã được tạo";
+    public static String CREATE_EMPLOYEE_TITLE = "[Felixiter Travel] - Employee account created";
     public static String CREATE_EMPLOYEE_CONTENT = """
-    Xin chào,
+    Hi,
 
-    Tài khoản của bạn đã được tạo thành công, sử dụng thông tin cung cấp như bên dưới để đăng nhập vào hệ thống:
+    Your employee account has been created successfully. Please use the details below to log in to the system:
 
     Email: %s
 
-    Mật khẩu: %s
+    Password: %s
 
-    — Đội ngũ Felixiter Travel
+    — Felixiter Travel Team
+    """;
+
+    public static String CREATE_BOOKING_TITLE = "[Felixiter Travel] - Booking confirmed";
+    public static String CREATE_BOOKING_CONTENT = """
+ 
+    Thank you for choosing Felixiter Travel. We sincerely appreciate your trust in our services.
+
+    We confirm that your tour booking request has been processed successfully. Here are the details:
+
+    Tour booking code: %s
+
+    Customer name: %s
+
+    Tour name: %s
+
+    Departure time: %s
+
+    Number of guests: %s
+
+    Total cost: %s
+
+    Please review the information above. If you have any questions or need further assistance, contact us at:
+
+    Email: felixiter.travel@gmail.com
+
+    Once again, thank you for choosing Felixiter Travel. We look forward to accompanying you on your upcoming trip!
+
+    Sincerely,
+    — Felixiter Travel Team
     """;
 
 }

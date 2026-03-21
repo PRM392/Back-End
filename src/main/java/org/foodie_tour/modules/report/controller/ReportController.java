@@ -27,7 +27,7 @@ public class ReportController {
     ReportService reportService;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('VIEW_REPORT')")
+//    @PreAuthorize("hasAuthority('VIEW_REPORT')")
     public ResponseEntity<ReportResponse> generateReport(@RequestParam (value = "from", required = false) LocalDateTime from,
                                                          @RequestParam (value = "to", required = false) LocalDateTime to) {
         var result = reportService.generateReport(from, to);
@@ -35,7 +35,7 @@ public class ReportController {
     }
 
     @GetMapping("/bookings")
-    @PreAuthorize("hasAuthority('VIEW_REPORT')")
+//    @PreAuthorize("hasAuthority('VIEW_REPORT')")
     public ResponseEntity<List<BookingReportResponse>> getBookingReport(
             @RequestParam(value = "from", required = false) LocalDateTime from,
             @RequestParam(value = "to", required = false) LocalDateTime to,
@@ -47,7 +47,7 @@ public class ReportController {
     }
 
     @GetMapping("/transactions")
-    @PreAuthorize("hasAuthority('VIEW_REPORT')")
+//    @PreAuthorize("hasAuthority('VIEW_REPORT')")
     public ResponseEntity<List<TransactionReportResponse>> getTransactionReport(
             @RequestParam(value = "from", required = false) LocalDateTime from,
             @RequestParam(value = "to", required = false) LocalDateTime to,
