@@ -17,8 +17,11 @@ public class OnePayController {
     private final OnePayService onePayService;
 
     @PostMapping("/generate-payment-url")
-    public ResponseEntity<String> generatePaymentUrl(@RequestBody long bookingId, HttpServletRequest request) {
-        String url = onePayService.generatePaymentUrl(bookingId, request);
+    public ResponseEntity<String> generatePaymentUrl(
+            @RequestBody long bookingId,
+            @RequestParam(value = "returnUrl", required = false) String customReturnUrl,
+            HttpServletRequest request) {
+        String url = onePayService.generatePaymentUrl(bookingId, customReturnUrl, request);
         System.out.println("DEBUG OnePay Generated URL: " + url);
         return ResponseEntity.ok(url);
     }

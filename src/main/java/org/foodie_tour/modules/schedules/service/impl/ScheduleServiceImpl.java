@@ -55,14 +55,39 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ScheduleResponse> getSchedules(Long tourId, Long routeId, ScheduleStatus status) {
+    public List<ScheduleResponse> getSchedules(Long tourId, Long routeId, ScheduleStatus status, Boolean availableOnly) {
         Specification<Schedule> spec = Specification.where(ScheduleSpecification.hasTourId(tourId))
                 .and(ScheduleSpecification.hasRouteId(routeId))
                 .and(ScheduleSpecification.hasStatus(status));
-        return scheduleRepository.findAll(spec)
-                .stream()
-                .map(scheduleMapper::toResponse)
+        
+        List<Schedule> schedules = scheduleRepository.findAll(spec);
+        
+        // Map và tính available slots
+        List<ScheduleResponse> responses = schedules.stream()
+                .map(schedule -> {
+                    ScheduleResponse response = scheduleMapper.toResponse(schedule);
+                    
+                    // Tính số khách đã book
+                    int totalBooked = scheduleRepository.countBookedPaxByScheduleId(schedule.getScheduleId());
+                    int maxPax = schedule.getMaxPax();
+                    int available = Math.max(0, maxPax - totalBooked);
+                    
+                    response.setTotalBookedPax(totalBooked);
+                    response.setAvailableSlots(available);
+                    response.setIsAvailable(available > 0 && schedule.getScheduleStatus() == ScheduleStatus.ACTIVE);
+                    
+                    return response;
+                })
                 .collect(Collectors.toList());
+        
+        // Filter nếu cần chỉ lấy schedules còn trống
+        if (Boolean.TRUE.equals(availableOnly)) {
+            responses = responses.stream()
+                    .filter(r -> Boolean.TRUE.equals(r.getIsAvailable()))
+                    .collect(Collectors.toList());
+        }
+        
+        return responses;
     }
 
     @Override

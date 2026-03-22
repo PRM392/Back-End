@@ -13,6 +13,7 @@ import org.foodie_tour.modules.auth.repository.OtpCodeRepository;
 import org.foodie_tour.modules.auth.service.AuthService;
 import org.foodie_tour.modules.booking.dto.request.BookingCancelRequest;
 import org.foodie_tour.modules.booking.dto.request.BookingCreateRequest;
+import org.foodie_tour.modules.booking.dto.request.ProcessCancelRequest;
 import org.foodie_tour.modules.booking.dto.request.ProcessRelocateRequest;
 import org.foodie_tour.modules.booking.dto.request.RelocateBookingRequest;
 import org.foodie_tour.modules.booking.dto.response.BookingLogResponse;
@@ -193,7 +194,7 @@ public class BookingServiceImpl implements BookingService {
                 .toList();
     }
 
-    public String generatePaymentUrl(long bookingId, HttpServletRequest servletRequest) {
+    public String generatePaymentUrl(long bookingId, HttpServletRequest servletRequest, String customReturnUrl) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Đặt lịch không tồn tại"));
 
@@ -203,7 +204,7 @@ public class BookingServiceImpl implements BookingService {
         if (booking.getPaymentMethod() == PaymentMethod.VNPAY) {
             return vnPayService.generatePaymentUrl(request, servletRequest);
         } else if (booking.getPaymentMethod() == PaymentMethod.VISA) {
-            return onePayService.generatePaymentUrl(bookingId, servletRequest);
+            return onePayService.generatePaymentUrl(bookingId, customReturnUrl, servletRequest);
         }
 
         throw new InvalidateDataException("Phương thức thanh toán không được hỗ trợ");
@@ -241,6 +242,7 @@ public class BookingServiceImpl implements BookingService {
         OtpCode otpEntity = new OtpCode();
         otpEntity.setOtpCode(otp);
         otpEntity.setToken(token);
+        otpEntity.setExpiredAt(LocalDateTime.now().plusMinutes(15));
         otpCodeRepository.save(otpEntity);
 
         // Send code to mail
@@ -345,7 +347,9 @@ public class BookingServiceImpl implements BookingService {
 
         String refundNote = "";
         if (isEligibleForRefund) {
+            // Đủ điều kiện hoàn tiền -> Hủy ngay
             booking.setBookingStatus(BookingStatus.CANCELLED);
+            booking.setRefundStatus(RefundStatus.COMPLETED);
             if (booking.getTotalPrice() > 0) {
                 Transactions refundTrans = Transactions.builder()
                         .booking(booking)
@@ -355,26 +359,22 @@ public class BookingServiceImpl implements BookingService {
                         .paymentMethod(booking.getPaymentMethod())
                         .build();
                 transactionsRepository.save(refundTrans);
-                booking.setRefundStatus(RefundStatus.COMPLETED);
             }
             refundNote = " Tiền đã được hoàn về ví của bạn. ";
         } else {
-            refundNote = " Tuy nhiên vì sát giờ khởi hành, yêu cầu hoàn tiền của bạn đang chờ bộ phận phê duyệt. ";
+            // Gần giờ khởi hành -> Chờ admin duyệt hủy
+            booking.setRefundStatus(RefundStatus.PENDING);
+            refundNote = " Tuy nhiên vì sát giờ khởi hành, yêu cầu hủy tour của bạn đang chờ bộ phận phê duyệt. ";
         }
 
         BookingLog log = BookingLog.builder()
                 .booking(booking)
-                .description("Lý do: " + request.getCancellationReason())
-                .bookingStatus(BookingStatus.CANCELLED)
+                .description("Yêu cầu hủy tour - Lý do: " + request.getCancellationReason())
+                .bookingStatus(booking.getBookingStatus() != null ? booking.getBookingStatus() : BookingStatus.PENDING)
                 .build();
         booking.getBookingLogs().add(log);
         bookingRepository.save(booking);
 
-        mailService.sendMail(new SendMailRequest(
-                new String[]{booking.getEmail()},
-                "XÁC NHẬN HỦY TOUR THÀNH CÔNG - " + booking.getBookingCode(),
-                "Chào " + booking.getCustomerName() + ", yêu cầu hủy tour của bạn đã thực hiện thành công."
-        ));
         return refundNote;
     }
 
@@ -407,6 +407,74 @@ public class BookingServiceImpl implements BookingService {
         bookingRepository.save(booking);
 
         return "Yêu cầu của bạn đã được phê duyệt.";
+    }
+
+    @Override
+    @Transactional
+    public BookingResponse processCancelRequest(ProcessCancelRequest request) {
+        Booking booking = bookingRepository.findByBookingCode(request.getBookingCode())
+                .orElseThrow(() -> new ResourceNotFoundException("Đặt lịch không tồn tại"));
+
+        // Kiểm tra xem có yêu cầu hủy chưa duyệt không
+        if (booking.getCancellationReason() == null || booking.getCancellationReason().isBlank()) {
+            throw new InvalidateDataException("Booking này không có yêu cầu hủy nào.");
+        }
+
+        // Kiểm tra đã được duyệt hủy chưa
+        if (booking.getBookingStatus() == BookingStatus.CANCELLED) {
+            throw new InvalidateDataException("Booking này đã được hủy trước đó.");
+        }
+
+        String adminAction;
+        if (request.isApproved()) {
+            // DUYỆT HỦY
+            booking.setBookingStatus(BookingStatus.CANCELLED);
+            booking.setRefundStatus(RefundStatus.COMPLETED);
+
+            // Tạo giao dịch hoàn tiền
+            if (booking.getTotalPrice() != null && booking.getTotalPrice() > 0) {
+                Transactions refundTrans = Transactions.builder()
+                        .booking(booking)
+                        .amount(booking.getTotalPrice())
+                        .cashFlow(CashFlow.OUTCOME)
+                        .status(TransactionStatus.SUCCESS)
+                        .paymentMethod(booking.getPaymentMethod())
+                        .build();
+                transactionsRepository.save(refundTrans);
+            }
+
+            adminAction = "DUYỆT HỦY";
+        } else {
+            // TỪ CHỐI HỦY
+            booking.setCancellationReason(null);
+            booking.setRefundStatus(null);
+
+            adminAction = "TỪ CHỐI HỦY";
+        }
+
+        // Log hành động admin
+        String logDescription = adminAction + (request.getAdminNote() != null && !request.getAdminNote().isBlank()
+                ? " - Ghi chú: " + request.getAdminNote()
+                : "");
+
+        BookingLog log = BookingLog.builder()
+                .booking(booking)
+                .description(logDescription)
+                .bookingStatus(booking.getBookingStatus())
+                .build();
+        booking.getBookingLogs().add(log);
+
+        bookingRepository.save(booking);
+
+        return bookingMapper.toResponse(booking);
+    }
+
+    @Override
+    public List<BookingResponse> getAllPendingCancelRequest() {
+        List<Booking> bookings = bookingRepository.findAllPendingCancel(RefundStatus.PENDING);
+        return bookings.stream()
+                .map(bookingMapper::toResponse)
+                .toList();
     }
 
     @Override

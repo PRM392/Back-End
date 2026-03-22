@@ -50,7 +50,7 @@ public class OnePayServiceImpl implements OnePayService {
     private String failedUrl;
 
     @Override
-    public String generatePaymentUrl(long bookingId, HttpServletRequest request) {
+    public String generatePaymentUrl(long bookingId, String customReturnUrl, HttpServletRequest request) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Đặt lịch không tồn tại"));
 
@@ -64,12 +64,19 @@ public class OnePayServiceImpl implements OnePayService {
         vpcParams.put("vpc_MerchTxnRef", "Booking" + bookingId + System.currentTimeMillis());
         vpcParams.put("vpc_OrderInfo", "Booking" + bookingId);
         vpcParams.put("vpc_Amount", String.valueOf(amountToPay * 100));
-        vpcParams.put("vpc_ReturnURL", onePayConfig.getReturnUrl());
+        
+        // Sử dụng customReturnUrl nếu frontend truyền, không thì dùng config
+        String returnUrl = (customReturnUrl != null && !customReturnUrl.isBlank()) 
+                ? customReturnUrl 
+                : onePayConfig.getReturnUrl();
+        vpcParams.put("vpc_ReturnURL", returnUrl);
+        
         vpcParams.put("vpc_Locale", "vn");
         vpcParams.put("vpc_Currency", "VND");
         vpcParams.put("vpc_IpAddr", "127.0.0.1");
         vpcParams.put("vpc_TicketNo", "127.0.0.1");
 
+        System.out.println("DEBUG OnePay - ReturnURL used: " + returnUrl);
         System.out.println("DEBUG OnePay - Parameters for Hashing:");
         StringBuilder hashData = new StringBuilder();
         for (Map.Entry<String, String> entry : vpcParams.entrySet()) {

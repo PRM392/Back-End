@@ -38,6 +38,7 @@ public interface BookingMapper {
     @Mapping(target = "paymentMethod", source = "paymentMethod")
     @Mapping(target = "createdAt", source = "createAt")
     @Mapping(target = "updatedAt", source = "updateAt")
+    @Mapping(target = "refundStatus", source = "refundStatus")
     @Mapping(target = "depositAmount", expression = "java(booking.getDeposit() != null && booking.getDeposit() ? (long)(booking.getTotalPrice() * 0.3) : 0L)")
     @Mapping(target = "remainingPercent", expression = "java(booking.getTotalPrice() != null && booking.getTotalPrice() > 0 ? (long)((booking.getRemainingAmount() != null ? booking.getRemainingAmount() : 0L) * 100 / booking.getTotalPrice()) : 0L)")
     @Mapping(target = "numberOfPeople", expression = "java(booking.getAdultCount() + booking.getChildrenCount())")

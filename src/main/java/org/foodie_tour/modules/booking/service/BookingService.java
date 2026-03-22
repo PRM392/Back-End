@@ -4,6 +4,7 @@ package org.foodie_tour.modules.booking.service;
 import jakarta.servlet.http.HttpServletRequest;
 import org.foodie_tour.modules.booking.dto.request.BookingCancelRequest;
 import org.foodie_tour.modules.booking.dto.request.BookingCreateRequest;
+import org.foodie_tour.modules.booking.dto.request.ProcessCancelRequest;
 import org.foodie_tour.modules.booking.dto.request.ProcessRelocateRequest;
 import org.foodie_tour.modules.booking.dto.request.RelocateBookingRequest;
 import org.foodie_tour.modules.booking.dto.response.BookingLogResponse;
@@ -19,7 +20,7 @@ public interface BookingService {
     List<BookingResponse> getAll(BookingStatus bookingStatus, Long scheduleId);
     BookingResponse getBookingByCode(String id);
     List<BookingLogResponse> getLogsByBookingCode(String bookingId);
-    String generatePaymentUrl(long bookingId, HttpServletRequest servletRequest);
+    String generatePaymentUrl(long bookingId, HttpServletRequest servletRequest, String customReturnUrl);
     String requestRelocateBooking(String bookingCode);
     void createRelocateBookingRequest(String token,  RelocateBookingRequest request);
     List<RelocateBookingResponse> getAllPendingRelocateRequest();
@@ -31,4 +32,8 @@ public interface BookingService {
     
     // Admin endpoints
     List<BookingResponse> getAllBookings(String status, String email, String fromDate, String toDate);
+
+    // Admin duyệt hủy tour
+    BookingResponse processCancelRequest(ProcessCancelRequest request);
+    List<BookingResponse> getAllPendingCancelRequest();
 }

@@ -18,6 +18,7 @@ public class DatabaseMigration {
     public void onStartup() {
         dropConstraintIfExists("transactions", "transactions_payment_method_check");
         dropConstraintIfExists("bookings", "bookings_payment_method_check");
+        dropConstraintIfExists("tours", "tours_tour_type_check");
     }
 
     private void dropConstraintIfExists(String table, String constraint) {

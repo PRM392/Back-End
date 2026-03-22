@@ -36,8 +36,9 @@ public class ScheduleController {
     public ResponseEntity<List<ScheduleResponse>> getSchedules(
             @RequestParam(required = false) Long tourId,
             @RequestParam(required = false) Long routeId,
-            @RequestParam(required = false) ScheduleStatus scheduleStatus) {
-        List<ScheduleResponse> responses = scheduleService.getSchedules(tourId, routeId, scheduleStatus);
+            @RequestParam(required = false) ScheduleStatus scheduleStatus,
+            @RequestParam(required = false, defaultValue = "false") Boolean availableOnly) {
+        List<ScheduleResponse> responses = scheduleService.getSchedules(tourId, routeId, scheduleStatus, availableOnly);
         return ResponseEntity.ok(responses);
     }
 

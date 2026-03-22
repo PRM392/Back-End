@@ -34,9 +34,11 @@ public class BookingResponse {
     int childrenCount;
     int numberOfPeople;
 
+    // Refund info
+    RefundStatus refundStatus;
+
     // Payment info
     PaymentMethod paymentMethod;
-    RefundStatus paymentStatus;
 
     // Payment summary (useful for frontend display)
     Long totalPrice;

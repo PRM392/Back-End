@@ -20,4 +20,9 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long>, JpaSp
             "AND s.scheduleStatus = 'ACTIVE'")
     Optional<Schedule> findActualSchedule(@Param("tour") Tour tour,
                                           @Param("departureAt") LocalDateTime departureAt);
+
+    @Query("SELECT COALESCE(SUM(b.adultCount + b.childrenCount), 0) FROM Booking b " +
+           "WHERE b.schedule.scheduleId = :scheduleId " +
+           "AND b.bookingStatus NOT IN ('CANCELLED')")
+    int countBookedPaxByScheduleId(@Param("scheduleId") Long scheduleId);
 }

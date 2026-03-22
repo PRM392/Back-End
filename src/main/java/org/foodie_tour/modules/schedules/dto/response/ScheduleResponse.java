@@ -18,6 +18,7 @@ public class ScheduleResponse {
     private String scheduleDescription;
     private Integer minPax;
     private Integer maxPax;
+    
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime departureAt;
 
@@ -27,4 +28,8 @@ public class ScheduleResponse {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime updatedAt;
     private ScheduleStatus scheduleStatus;
+    
+    private Integer totalBookedPax;
+    private Integer availableSlots;
+    private Boolean isAvailable;
 }

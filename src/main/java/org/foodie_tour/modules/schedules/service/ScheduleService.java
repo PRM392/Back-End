@@ -8,7 +8,7 @@ import org.foodie_tour.modules.schedules.enums.ScheduleStatus;
 public interface ScheduleService {
     ScheduleResponse createSchedule(ScheduleRequest request);
 
-    List<ScheduleResponse> getSchedules(Long tourId, Long routeId, ScheduleStatus status);
+    List<ScheduleResponse> getSchedules(Long tourId, Long routeId, ScheduleStatus status, Boolean availableOnly);
     ScheduleResponse updateSchedule(Long scheduleId, ScheduleRequest request);
     void deleteSchedule(Long scheduleId);
 }

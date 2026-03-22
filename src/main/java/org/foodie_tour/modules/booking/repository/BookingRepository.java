@@ -2,6 +2,7 @@ package org.foodie_tour.modules.booking.repository;
 
 import org.foodie_tour.modules.booking.entity.Booking;
 import org.foodie_tour.modules.booking.enums.BookingStatus;
+import org.foodie_tour.modules.booking.enums.RefundStatus;
 import org.foodie_tour.modules.schedules.entity.Schedule;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -53,4 +54,12 @@ public interface BookingRepository extends JpaRepository<Booking,Long>, JpaSpeci
             @Param("status") BookingStatus status,
             @Param("schedule") Schedule schedule
     );
+
+    // Tìm booking có yêu cầu hủy chờ duyệt (refundStatus = PENDING, có cancellationReason, chưa CANCELLED)
+    @Query("SELECT b FROM Booking b WHERE " +
+            "b.cancellationReason IS NOT NULL AND " +
+            "b.bookingStatus <> 'CANCELLED' AND " +
+            "b.refundStatus = :refundStatus " +
+            "ORDER BY b.updateAt DESC")
+    List<Booking> findAllPendingCancel(@Param("refundStatus") RefundStatus refundStatus);
 }

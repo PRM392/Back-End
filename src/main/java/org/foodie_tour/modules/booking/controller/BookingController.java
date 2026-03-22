@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.foodie_tour.modules.booking.dto.request.BookingCancelRequest;
 import org.foodie_tour.modules.booking.dto.request.BookingCreateRequest;
+import org.foodie_tour.modules.booking.dto.request.ProcessCancelRequest;
 import org.foodie_tour.modules.booking.dto.request.ProcessRelocateRequest;
 import org.foodie_tour.modules.booking.dto.request.RelocateBookingRequest;
 import org.foodie_tour.modules.booking.dto.response.BookingLogResponse;
@@ -17,7 +18,6 @@ import org.foodie_tour.modules.booking.enums.PaymentMethod;
 import org.foodie_tour.modules.booking.service.BookingService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -56,13 +56,15 @@ public class BookingController {
     }
 
     @PostMapping("/{bookingId}/payment")
-    public ResponseEntity<String> generatePaymentUrl(@PathVariable long bookingId, HttpServletRequest servletRequest) {
-        var result = bookingService.generatePaymentUrl(bookingId, servletRequest);
+    public ResponseEntity<String> generatePaymentUrl(
+            @PathVariable long bookingId,
+            @RequestParam(value = "returnUrl", required = false) String customReturnUrl,
+            HttpServletRequest servletRequest) {
+        var result = bookingService.generatePaymentUrl(bookingId, servletRequest, customReturnUrl);
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
     @GetMapping("/relocate/all-request")
-    @PreAuthorize("hasAuthority('PROCESS_RELOCATE_BOOKING_REQUEST')")
     public ResponseEntity<List<RelocateBookingResponse>> getAllRelocateRequest() {
         var result = bookingService.getAllPendingRelocateRequest();
         return ResponseEntity.status(HttpStatus.OK).body(result);
@@ -81,7 +83,6 @@ public class BookingController {
     }
 
     @PutMapping("/relocate/process")
-    @PreAuthorize("hasAuthority('PROCESS_RELOCATE_BOOKING_REQUEST')")
     public ResponseEntity<BookingResponse> processRequest(@RequestBody ProcessRelocateRequest request) {
         var result = bookingService.processRelocateRequest(request);
         return ResponseEntity.status(HttpStatus.OK).body(result);
@@ -94,11 +95,32 @@ public class BookingController {
     }
 
     @PutMapping("/{bookingCode}/approve-refund")
-    @PreAuthorize("hasAuthority('ADMIN_REFUND')")
     public ResponseEntity<String> approveManualRefund(
             @PathVariable String bookingCode
     ) {
         String result = bookingService.approveManualRefund(bookingCode);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Admin lấy danh sách booking chờ duyệt hủy
+     * GET /api/booking/cancel/pending
+     */
+    @GetMapping("/cancel/pending")
+    public ResponseEntity<List<BookingResponse>> getPendingCancelRequests() {
+        var result = bookingService.getAllPendingCancelRequest();
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Admin duyệt hoặc từ chối yêu cầu hủy tour
+     * PUT /api/booking/cancel/process
+     */
+    @PutMapping("/cancel/process")
+    public ResponseEntity<BookingResponse> processCancel(
+            @RequestBody ProcessCancelRequest request
+    ) {
+        var result = bookingService.processCancelRequest(request);
         return ResponseEntity.ok(result);
     }
 
