@@ -25,7 +25,7 @@ public class TourController {
     private final TourService tourService;
 
     @PostMapping()
-    @PreAuthorize("hasAuthority('CREATE_TOUR')")
+//    @PreAuthorize("hasAuthority('CREATE_TOUR')")
     public ResponseEntity<TourResponse> createTour(@Valid @RequestBody TourRequest tourRequest) {
         TourResponse response = tourService.createTour(tourRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);

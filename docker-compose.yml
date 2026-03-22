@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: foodie-tour-db
+    environment:
+      POSTGRES_DB: ${DB_NAME:-foodie_tour}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: foodie-tour-backend
+    env_file: .env
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-foodie_tour}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      # Add other required environment variables here
+      APPLICATION_NAME: "Foodie Tour Backend"
+      PORT: 8080
+    depends_on:
+      - db
+    restart: always
+
+volumes:
+  postgres_data:

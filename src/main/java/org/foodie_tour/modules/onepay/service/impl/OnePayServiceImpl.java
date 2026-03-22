@@ -56,40 +56,56 @@ public class OnePayServiceImpl implements OnePayService {
 
         long amountToPay = Boolean.TRUE.equals(booking.getDeposit()) ? (long) (booking.getTotalPrice() * 0.3) : booking.getTotalPrice();
 
-        TreeMap<String, String> vpcParams = new TreeMap<>();
+        TreeMap<String, String> vpcParams = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         vpcParams.put("vpc_Version", "2");
         vpcParams.put("vpc_Command", "pay");
         vpcParams.put("vpc_Merchant", onePayConfig.getMerchantId());
         vpcParams.put("vpc_AccessCode", onePayConfig.getAccessCode());
-        vpcParams.put("vpc_MerchTxnRef", "Booking-" + bookingId + "-" + System.currentTimeMillis());
-        vpcParams.put("vpc_OrderInfo", "Booking-" + bookingId);
+        vpcParams.put("vpc_MerchTxnRef", "Booking" + bookingId + System.currentTimeMillis());
+        vpcParams.put("vpc_OrderInfo", "Booking" + bookingId);
         vpcParams.put("vpc_Amount", String.valueOf(amountToPay * 100));
         vpcParams.put("vpc_ReturnURL", onePayConfig.getReturnUrl());
         vpcParams.put("vpc_Locale", "vn");
-        vpcParams.put("vpc_IpAddr", getIpAddress(request));
+        vpcParams.put("vpc_Currency", "VND");
+        vpcParams.put("vpc_IpAddr", "127.0.0.1");
+        vpcParams.put("vpc_TicketNo", "127.0.0.1");
 
+        System.out.println("DEBUG OnePay - Parameters for Hashing:");
         StringBuilder hashData = new StringBuilder();
         for (Map.Entry<String, String> entry : vpcParams.entrySet()) {
-            if (hashData.length() > 0)
-                hashData.append("&");
-            hashData.append(entry.getKey()).append("=").append(entry.getValue());
+            if (entry.getValue() != null && !entry.getValue().isEmpty()) {
+                System.out.println("  " + entry.getKey() + " = " + entry.getValue());
+                if (hashData.length() > 0) hashData.append("&");
+                hashData.append(entry.getKey()).append("=").append(entry.getValue());
+            }
         }
 
+        System.out.println("DEBUG OnePay - Raw Hash Data String: " + hashData.toString());
         String secureHash = hmacSHA256(onePayConfig.getHashSecret(), hashData.toString());
+        System.out.println("DEBUG OnePay - Generated Secure Hash: " + secureHash.toUpperCase());
 
         String queryString = vpcParams.entrySet().stream()
+                .filter(entry -> entry.getValue() != null && !entry.getValue().isEmpty())
                 .map(entry -> {
                     try {
-                        return entry.getKey() + "=" + java.net.URLEncoder.encode(entry.getValue(),
-                                StandardCharsets.UTF_8.toString());
+                        String encodedVal = java.net.URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8.toString())
+                                .replace("+", "%20");
+                        return entry.getKey() + "=" + encodedVal;
                     } catch (Exception e) {
                         return entry.getKey() + "=" + entry.getValue();
                     }
                 })
                 .collect(Collectors.joining("&"));
 
-        return onePayConfig.getPayUrl() + "?" + queryString + "&vpc_SecureHash=" + secureHash.toUpperCase();
+        String finalUrl = onePayConfig.getPayUrl() + "?" + queryString + "&vpc_SecureHash=" + secureHash.toUpperCase();
+        System.out.println("DEBUG OnePay - Final URL: " + finalUrl);
+        return finalUrl;
     }
+
+    @org.springframework.beans.factory.annotation.Value("${onepay.payment-success-url}")
+    private String SUCCESS_URL;
+    @org.springframework.beans.factory.annotation.Value("${onepay.payment-failed-url}")
+    private String FAILED_URL;
 
     @Override
     @Transactional
@@ -144,7 +160,7 @@ public class OnePayServiceImpl implements OnePayService {
         Transactions transactions = Transactions.builder()
                 .booking(booking)
                 .amount(amountPaidThisTime)
-                .paymentMethod(PaymentMethod.VISA)
+                .paymentMethod(PaymentMethod.ONEPAY)
                 .cashFlow(CashFlow.INCOME)
                 .status(isSuccess ? TransactionStatus.SUCCESS : TransactionStatus.FAILED)
                 .gatewayTransactionId(gatewayTransactionId)
@@ -153,7 +169,6 @@ public class OnePayServiceImpl implements OnePayService {
 
         if (isSuccess) {
             booking.setAmountPaid(amountPaidThisTime);
-            // Deposit booking: set DEPOSIT_PAID để khách biết đã cọc, chờ thanh toán 70% còn lại
             if (Boolean.TRUE.equals(booking.getDeposit())) {
                 booking.setBookingStatus(BookingStatus.DEPOSIT_PAID);
                 booking.setRemainingAmount(booking.getTotalPrice() - amountPaidThisTime);

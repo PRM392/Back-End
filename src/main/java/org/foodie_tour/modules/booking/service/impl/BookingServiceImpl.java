@@ -129,6 +129,7 @@ public class BookingServiceImpl implements BookingService {
         booking.setSchedule(actualSchedule);
         booking.setTour(tour);
         booking.setRoute(actualSchedule.getRoute());
+        booking.setDepartureTime(actualDepartureAt);
         booking.setBookingStatus(BookingStatus.PENDING);
         booking.setRefundStatus(RefundStatus.INACTIVE);
         booking.setDeposit(request.isDeposit());
@@ -169,6 +170,16 @@ public class BookingServiceImpl implements BookingService {
         customerBookingRepository.save(customerBooking);
 
         return bookingMapper.toResponse(booking);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BookingResponse> getAll(BookingStatus bookingStatus,Long scheduleId) {
+        Schedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new ResourceNotFoundException("Lịch trình không tồn tại"));;
+        return bookingRepository.findByStatusAndSchedule(bookingStatus, schedule).stream()
+                .map(bookingMapper::toResponse)
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -274,6 +285,9 @@ public class BookingServiceImpl implements BookingService {
                 .build();
 
         relocateBookingRepository.save(entity);
+        updateBookingStatus(findByBookingCode(request.getBookingCode()),
+                BookingStatus.PENDING,
+                "Đang chờ xử lý yêu cầu dời lịch trình mới");
     }
 
     @Transactional(readOnly = true)
@@ -327,7 +341,6 @@ public class BookingServiceImpl implements BookingService {
         LocalDateTime departureTime = booking.getSchedule().getDepartureAt();
         boolean isEligibleForRefund = now.plusHours(allowHours).isBefore(departureTime);
 
-        booking.setBookingStatus(BookingStatus.CANCELLED);
         booking.setCancellationReason(request.getCancellationReason());
 
         String refundNote = "";
@@ -346,7 +359,6 @@ public class BookingServiceImpl implements BookingService {
             }
             refundNote = " Tiền đã được hoàn về ví của bạn. ";
         } else {
-            booking.setBookingStatus(BookingStatus.PENDING);
             refundNote = " Tuy nhiên vì sát giờ khởi hành, yêu cầu hoàn tiền của bạn đang chờ bộ phận phê duyệt. ";
         }
 
@@ -535,4 +547,18 @@ public class BookingServiceImpl implements BookingService {
                 .collect(Collectors.toList());
     }
 
+    private void updateBookingStatus(Booking booking, BookingStatus newStatus, String description) {
+        if (booking.getBookingStatus() == newStatus) {
+            return;
+        }
+
+        booking.setBookingStatus(newStatus);
+        BookingLog log = BookingLog.builder()
+                .booking(booking)
+                .description(description)
+                .bookingStatus(newStatus)
+                .build();
+        booking.getBookingLogs().add(log);
+        bookingRepository.save(booking);
+    }
 }

@@ -55,7 +55,7 @@ public class CheckPointServiceImpl implements CheckPointService {
                 Image img = Image.builder()
                         .imageUrl(publicUrl)
                         .imageStatus(ImageStatus.ACTIVE)
-                        .imageDescription("Ảnh cho checkpoint: " + saved.getLocationName()) // Gán description
+                        .imageDescription("Ảnh cho checkpoint: " + saved.getLocationName())
                         .build();
                 img = imageRepository.save(img);
 
@@ -74,10 +74,11 @@ public class CheckPointServiceImpl implements CheckPointService {
 
     @Override
     public List<CheckPointResponse> getCheckpointsByTourId(Long tourId) {
-        Tour tour = tourRepository.findById(tourId)
-                .orElseThrow(() -> new ResourceNotFoundException("Tour không tồn tại"));
+        if (!tourRepository.existsById(tourId)) {
+            throw new ResourceNotFoundException("Tour không tồn tại");
+        }
 
-        List<CheckPoint> checkPoints = checkPointRepository.findByTour_TourId(tour.getTourId());
+        List<CheckPoint> checkPoints = checkPointRepository.findByTour_TourId(tourId);
         return checkPoints.stream()
                 .map(checkPointMapper::toResponse)
                 .toList();

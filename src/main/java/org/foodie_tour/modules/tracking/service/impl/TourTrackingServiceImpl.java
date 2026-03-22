@@ -148,12 +148,29 @@ public class TourTrackingServiceImpl implements TourTrackingService {
 
     @Override
     public TourSessionResponse getActiveSession(Long scheduleId, Long guideId) {
-        TourSession session = tourSessionRepository
-                .findBySchedule_ScheduleIdAndGuide_EmployeeIdAndSessionStatus(
-                        scheduleId, guideId, TourSessionStatus.IN_PROGRESS)
-                .orElseThrow(() -> new ResourceNotFoundException(
+        java.util.Optional<TourSession> sessionOpt;
+        
+        if (scheduleId != null) {
+            sessionOpt = tourSessionRepository
+                    .findBySchedule_ScheduleIdAndGuide_EmployeeIdAndSessionStatus(
+                            scheduleId, guideId, TourSessionStatus.IN_PROGRESS);
+        } else {
+            // Nếu không có scheduleId, tìm bất kỳ session nào đang chạy của guide này
+            sessionOpt = tourSessionRepository
+                    .findFirstByGuide_EmployeeIdAndSessionStatus(guideId, TourSessionStatus.IN_PROGRESS);
+        }
+
+        TourSession session = sessionOpt.orElseThrow(() -> new ResourceNotFoundException(
                         "Không có phiên tour đang hoạt động cho guide này"));
         return toSessionResponse(session);
+    }
+
+    @Override
+    public List<TourSessionResponse> getSessionsByGuideId(Long guideId) {
+        return tourSessionRepository.findByGuide_EmployeeId(guideId)
+                .stream()
+                .map(this::toSessionResponse)
+                .toList();
     }
 
     // ─── Helper ─────────────────────────────────────────────────────────────────
@@ -170,7 +187,27 @@ public class TourTrackingServiceImpl implements TourTrackingService {
     private TourSessionResponse toSessionResponse(TourSession session) {
         TourSessionResponse res = new TourSessionResponse();
         res.setSessionId(session.getSessionId());
-        res.setScheduleId(session.getSchedule().getScheduleId());
+        
+        org.foodie_tour.modules.schedules.entity.Schedule schedule = session.getSchedule();
+        if (schedule != null) {
+            res.setScheduleId(schedule.getScheduleId());
+            if (schedule.getTour() != null) {
+                res.setTourId(schedule.getTour().getTourId());
+                res.setTourTitle(schedule.getTour().getTourName());
+            }
+            if (schedule.getRoute() != null) {
+                res.setRouteId(schedule.getRoute().getRouteId());
+                res.setLocation(schedule.getRoute().getRouteName());
+            }
+            if (schedule.getDepartureAt() != null) {
+                res.setDepartureDate(schedule.getDepartureAt().toLocalDate().toString());
+                int hour = schedule.getDepartureAt().getHour();
+                int minute = schedule.getDepartureAt().getMinute();
+                res.setDepartureTime(String.format("%02d:%02d", hour, minute));
+            }
+            res.setGuests(schedule.getMaxPax());
+        }
+
         res.setGuideId(session.getGuide().getEmployeeId());
         res.setGuideName(session.getGuide().getEmployeeName());
         res.setSessionStatus(session.getSessionStatus().name());

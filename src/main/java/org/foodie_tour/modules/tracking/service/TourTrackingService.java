@@ -35,4 +35,7 @@ public interface TourTrackingService {
 
     /** Lấy phiên tour đang IN_PROGRESS của guide */
     TourSessionResponse getActiveSession(Long scheduleId, Long guideId);
+
+    /** Lấy toàn bộ phiên tour của guide */
+    List<TourSessionResponse> getSessionsByGuideId(Long guideId);
 }

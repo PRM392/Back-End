@@ -9,12 +9,14 @@ import org.foodie_tour.modules.booking.dto.request.RelocateBookingRequest;
 import org.foodie_tour.modules.booking.dto.response.BookingLogResponse;
 import org.foodie_tour.modules.booking.dto.response.BookingResponse;
 import org.foodie_tour.modules.booking.dto.response.RelocateBookingResponse;
+import org.foodie_tour.modules.booking.enums.BookingStatus;
 import org.foodie_tour.modules.booking.enums.PaymentMethod;
 
 import java.util.List;
 
 public interface BookingService {
     BookingResponse createBooking(BookingCreateRequest request);
+    List<BookingResponse> getAll(BookingStatus bookingStatus, Long scheduleId);
     BookingResponse getBookingByCode(String id);
     List<BookingLogResponse> getLogsByBookingCode(String bookingId);
     String generatePaymentUrl(long bookingId, HttpServletRequest servletRequest);

@@ -9,8 +9,11 @@ import org.foodie_tour.modules.routes.entity.Route;
 import org.foodie_tour.modules.schedules.entity.Schedule;
 import org.foodie_tour.modules.tours.enums.TourStatus;
 import org.foodie_tour.modules.tours.enums.TourType;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -52,9 +55,11 @@ public class Tour {
     private TourStatus tourStatus;
 
     @Column(name = "created_at")
+    @CreationTimestamp
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
+    @UpdateTimestamp
     private LocalDateTime updatedAt;
 
     @Column(name = "is_customizable")
@@ -70,14 +75,14 @@ public class Tour {
     private Integer totalCustomPlaces;
 
     @OneToMany(mappedBy = "tour", cascade = CascadeType.ALL)
-    private List<Dish> dishes;
+    private List<Dish> dishes = new ArrayList<>();
 
     @OneToMany(mappedBy = "tour", cascade = CascadeType.ALL)
-    private List<Schedule> schedules;
+    private List<Schedule> schedules = new ArrayList<>();
 
     @OneToMany(mappedBy = "tour", cascade = CascadeType.ALL)
-    private List<Route> routes;
+    private List<Route> routes = new ArrayList<>();
 
     @OneToMany(mappedBy = "tour", cascade = CascadeType.ALL)
-    private List<TourImage> tourImages;
+    private List<TourImage> tourImages = new ArrayList<>();
 }

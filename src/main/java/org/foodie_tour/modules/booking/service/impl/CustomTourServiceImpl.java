@@ -114,15 +114,11 @@ public class CustomTourServiceImpl implements CustomTourService {
     }
 
     private void validateCustomConstraints(Tour tour, List<CheckPoint> selectedCPs) {
-        int requiredTotal = (tour.getTotalCustomPlaces() != null) ? tour.getTotalCustomPlaces() : 5;
         int minFood = (tour.getMinFoodPlaces() != null) ? tour.getMinFoodPlaces() : 0;
         int minVisit = (tour.getMinVisitPlaces() != null) ? tour.getMinVisitPlaces() : 0;
 
-        if (selectedCPs.size() != requiredTotal) {
-            throw new InvalidateDataException(
-                    String.format("Bạn phải chọn chính xác %d địa điểm cho tour này (Hiện tại: %d)",
-                            requiredTotal, selectedCPs.size())
-            );
+        if (selectedCPs.isEmpty()) {
+            throw new InvalidateDataException("Bạn phải chọn ít nhất 1 địa điểm cho lộ trình này.");
         }
 
         long foodCount = selectedCPs.stream()

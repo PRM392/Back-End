@@ -1,5 +1,6 @@
 package org.foodie_tour.modules.tours.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,4 +25,15 @@ public class TourResponse {
     private TourStatus tourStatus;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    
+    @JsonProperty("customizable")
+    private Boolean customizable;
+    
+    @JsonProperty("minFoodPlaces")
+    private Integer minFoodPlaces;
+    
+    @JsonProperty("minVisitPlaces")
+    private Integer minVisitPlaces;
+    
+    private String thumbnailUrl;
 }

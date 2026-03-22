@@ -65,8 +65,6 @@ public class VNPayServiceImpl implements VNPayService {
     @NonFinal
     String FAILED_URL;
 
-    // Create payment url
-
     private String getIpAddress(HttpServletRequest request) {
         String ip = request.getHeader("x-forwarded-for");
         if (StringUtils.hasText(ip)) {
@@ -82,7 +80,6 @@ public class VNPayServiceImpl implements VNPayService {
     }
 
     public void verifyPaymentRequest(PaymentRequest request, String ipAddress) {
-        // verify booking id and amount
         if (!bookingRepository.existsById(request.getBookingId())) {
             throw new ResourceNotFoundException("Đặt lịch không tồn tại");
         }
@@ -130,14 +127,12 @@ public class VNPayServiceImpl implements VNPayService {
         Booking booking = bookingRepository.findById(request.getBookingId())
                 .orElseThrow(() -> new ResourceNotFoundException("Đặt lịch không tồn tại"));
 
-        // Put metadata
         vnp_Params.put("vnp_Version", VNPayConfig.VERSION);
         vnp_Params.put("vnp_Command", VNPayConfig.COMMAND);
         vnp_Params.put("vnp_TmnCode", vnPayConfig.getTmnCode());
         vnp_Params.put("vnp_Amount", String.valueOf(request.getAmount() * 100));
         vnp_Params.put("vnp_CurrCode", VNPayConfig.CURR_CODE);
 
-        // Build txnRef - special id for payment request
         String txnRef = RandomCode.generateRandomCodeByKey(String.valueOf(request.getBookingId()), 16);
         vnp_Params.put("vnp_TxnRef", txnRef);
 
@@ -145,23 +140,19 @@ public class VNPayServiceImpl implements VNPayService {
 
         vnp_Params.put("vnp_OrderInfo", orderInfo);
 
-        // Build order type
         String orderType = "Payment Booking";
         vnp_Params.put("vnp_OrderType", orderType);
 
-        // Set language
         vnp_Params.put("vnp_Locale", VNPayConfig.LOCALE);
 
         vnp_Params.put("vnp_ReturnUrl", vnPayConfig.getReturnUrl());
         vnp_Params.put("vnp_IpAddr", ipAddress);
 
-        // Build create date
         Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
         String vnp_CreateDate = formatter.format(calendar.getTime());
         vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
 
-        // Build expired date
         calendar.add(Calendar.MINUTE, EXPIRED_TIME);
         String vnp_ExpireDate = formatter.format(calendar.getTime());
         vnp_Params.put("vnp_ExpireDate", vnp_ExpireDate);
@@ -181,11 +172,9 @@ public class VNPayServiceImpl implements VNPayService {
             String fieldName = itr.next();
             String fieldValue = vnp_params.get(fieldName);
             if ((fieldValue != null) && (!fieldValue.isEmpty())) {
-                // Build hash data
                 hashData.append(fieldName);
                 hashData.append('=');
                 hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
-                // Build query
                 query.append(URLEncoder.encode(fieldName, StandardCharsets.US_ASCII));
                 query.append('=');
                 query.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
@@ -211,14 +200,11 @@ public class VNPayServiceImpl implements VNPayService {
         }
     }
 
-    // IPN process
-
     public Map<String, String> processIPNFromVnpay(Map<String, String> response) {
         try {
             if (response.isEmpty()) {
                 return createIPNResponse("99", "Invalid request");
             }
-            // Check sum
             checkSum(response);
 
             return processIPNResult(response);
@@ -241,7 +227,6 @@ public class VNPayServiceImpl implements VNPayService {
             throw new RuntimeException("Dữ liệu không hợp lệ");
         }
 
-        // Create new map to avoid modifying input
         Map<String, String> fields = new HashMap<>(response);
         fields.remove("vnp_SecureHash");
         fields.remove("vnp_SecureHashType");
@@ -279,15 +264,12 @@ public class VNPayServiceImpl implements VNPayService {
         if (response.isEmpty()) {
             throw new RuntimeException("Thiếu tham số");
         }
-        // Check amount
         if (!response.containsKey("vnp_Amount")) {
             return createIPNResponse("99", "Missing amount");
         }
-        // Check responseCode and transaction status
         if (responseCode.equals("00") && transactionStatus.equals("00")) {
             return createIPNResponse("00", "Success");
         }
-        // Other errors
         return createIPNResponse("99", "Failed");
     }
 
@@ -314,8 +296,6 @@ public class VNPayServiceImpl implements VNPayService {
             throw new RuntimeException("Có lỗi xảy ra");
         }
     }
-
-    // Process status
 
     @Transactional
     public String processPaymentResponse(Map<String, String> response) {
@@ -385,7 +365,7 @@ public class VNPayServiceImpl implements VNPayService {
         String vnpTransactionNo = response.get("vnp_TransactionNo");
 
         String returnUrl;
-        BookingStatus bookingStatus = BookingStatus.PENDING;  // Default
+        BookingStatus bookingStatus = BookingStatus.PENDING;
         TransactionStatus transactionStatus;
         String logDescription;
 
@@ -405,10 +385,8 @@ public class VNPayServiceImpl implements VNPayService {
         System.out.println("Transaction saved");
 
         if (success) {
-            // Update booking & transaction
             transactionStatus = TransactionStatus.SUCCESS;
 
-            // Update customer
             customerBookingRepository.findByBooking(booking).ifPresent(cb -> {
                 Customer customer = cb.getCustomer();
                 customer.setStatus(CustomerStatus.COMPLETED);
@@ -417,7 +395,6 @@ public class VNPayServiceImpl implements VNPayService {
 
             booking.setAmountPaid(amount);
             
-            // Deposit booking: set DEPOSIT_PAID để khách biết đã cọc, chờ thanh toán 70% còn lại
             if (Boolean.TRUE.equals(booking.getDeposit())) {
                 booking.setBookingStatus(BookingStatus.DEPOSIT_PAID);
                 booking.setRemainingAmount(booking.getTotalPrice() - amount);
@@ -432,7 +409,6 @@ public class VNPayServiceImpl implements VNPayService {
             System.out.println("SUCCESS: deposit=" + booking.getDeposit() + ", bookingStatus=" + booking.getBookingStatus() + ", amountPaid=" + amount);
             bookingStatus = booking.getBookingStatus();
         } else {
-            // Update booking & transaction
             bookingStatus = BookingStatus.CANCELLED;
             transactionStatus = TransactionStatus.FAILED;
             logDescription = "Thanh toán thất bại";
@@ -443,7 +419,6 @@ public class VNPayServiceImpl implements VNPayService {
         transaction.setStatus(transactionStatus);
         booking.setBookingStatus(bookingStatus);
 
-        // Create and save log AFTER determining status
         BookingLog log = BookingLog.builder()
                 .booking(booking)
                 .description(logDescription)

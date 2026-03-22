@@ -12,6 +12,7 @@ import org.foodie_tour.modules.booking.dto.request.RelocateBookingRequest;
 import org.foodie_tour.modules.booking.dto.response.BookingLogResponse;
 import org.foodie_tour.modules.booking.dto.response.BookingResponse;
 import org.foodie_tour.modules.booking.dto.response.RelocateBookingResponse;
+import org.foodie_tour.modules.booking.enums.BookingStatus;
 import org.foodie_tour.modules.booking.enums.PaymentMethod;
 import org.foodie_tour.modules.booking.service.BookingService;
 import org.springframework.http.HttpStatus;
@@ -32,6 +33,14 @@ public class BookingController {
     public ResponseEntity<BookingResponse> createBooking(@RequestBody BookingCreateRequest request) {
         var result = bookingService.createBooking(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
+    }
+
+    @GetMapping()
+    public ResponseEntity<List<BookingResponse>> getAllBookings(
+            @RequestParam (required = false) BookingStatus bookingStatus,
+            @RequestParam (required = false) Long scheduleId
+    ) {
+        return ResponseEntity.ok(bookingService.getAll(bookingStatus, scheduleId));
     }
 
     @GetMapping("/{bookingCode}")

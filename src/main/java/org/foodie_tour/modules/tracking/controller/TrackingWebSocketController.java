@@ -14,6 +14,7 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -58,6 +59,7 @@ public class TrackingWebSocketController {
      * Guide gửi vị trí GPS lên server qua WebSocket.
      * Mapping: /app/tracking/location  →  phương thức này xử lý
      */
+    @Transactional
     @MessageMapping("/tracking/location")
     public void handleLocationUpdate(@Payload LocationMessage message) {
         log.info("📍 Nhận location từ session {}: lat={}, lng={}",
