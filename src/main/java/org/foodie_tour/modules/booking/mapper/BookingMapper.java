@@ -28,6 +28,6 @@ public interface BookingMapper {
     @Mapping(target = "scheduleId", source = "schedule.scheduleId")
     @Mapping(target = "tourId", source = "tour.tourId")
     @Mapping(target = "routeId", source = "route.routeId")
-    @Mapping(target = "departureTime", source = "schedule.departureAt")
+    @Mapping(target = "departureTime", source = "booking.departureTime")
     BookingResponse toResponse(Booking booking);
 }
