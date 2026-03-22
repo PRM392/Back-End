@@ -195,7 +195,10 @@ public class TourTrackingServiceImpl implements TourTrackingService {
                 res.setTourId(schedule.getTour().getTourId());
                 res.setTourTitle(schedule.getTour().getTourName());
             }
-            if (schedule.getRoute() != null) res.setLocation(schedule.getRoute().getRouteName());
+            if (schedule.getRoute() != null) {
+                res.setRouteId(schedule.getRoute().getRouteId());
+                res.setLocation(schedule.getRoute().getRouteName());
+            }
             if (schedule.getDepartureAt() != null) {
                 res.setDepartureDate(schedule.getDepartureAt().toLocalDate().toString());
                 int hour = schedule.getDepartureAt().getHour();

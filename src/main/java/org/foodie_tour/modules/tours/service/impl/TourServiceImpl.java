@@ -49,7 +49,7 @@ public class TourServiceImpl implements TourService {
         Tour tour = tourRepository.findById(tourId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tour"));
 
-        tour.setIsCustomizable(request.getIsCustomizable());
+        tour.setIsCustomizable(request.getCustomizable());
         tour.setTotalCustomPlaces(request.getTotalCustomPlaces());
         tour.setMinFoodPlaces(request.getMinFoodPlaces());
         tour.setMinVisitPlaces(request.getMinVisitPlaces());

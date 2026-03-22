@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class TourCustomConfigRequest {
 
-    private Boolean isCustomizable;
+    private Boolean customizable;
     private Integer totalCustomPlaces;
     private Integer minFoodPlaces;
     private Integer minVisitPlaces;

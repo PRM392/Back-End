@@ -16,6 +16,7 @@ public class TourSessionResponse {
     private LocalDateTime endedAt;
     private LocalDateTime createdAt;
     private Long tourId;
+    private Long routeId;
     private String tourTitle;
     private String departureDate;
     private String departureTime;

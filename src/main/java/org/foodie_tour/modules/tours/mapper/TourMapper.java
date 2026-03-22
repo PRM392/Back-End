@@ -17,11 +17,14 @@ public interface TourMapper {
     @Mapping(target = "tourId", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(source = "customizable", target = "isCustomizable")
     Tour toEntity(TourRequest tourRequest);
 
+    @Mapping(source = "isCustomizable", target = "customizable")
     TourResponse toResponse(Tour tour);
 
     @Mapping(target = "tourId", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
+    @Mapping(source = "customizable", target = "isCustomizable")
     void updateEntity(TourRequest tourRequest, @MappingTarget Tour tour);
 }

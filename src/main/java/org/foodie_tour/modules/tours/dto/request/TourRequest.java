@@ -17,4 +17,7 @@ public class TourRequest {
     private TourStatus tourStatus;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private Boolean customizable;
+    private Integer minFoodPlaces;
+    private Integer minVisitPlaces;
 }
