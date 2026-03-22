@@ -143,6 +143,14 @@ public class CustomTourServiceImpl implements CustomTourService {
             );
         }
 
+        int totalMin = (tour.getTotalCustomPlaces() != null) ? tour.getTotalCustomPlaces() : 0;
+        if (selectedCPs.size() < totalMin) {
+            throw new InvalidateDataException(
+                    String.format("Lộ trình custom phải có tổng cộng tối thiểu %d địa điểm. Bạn mới chọn %d.",
+                            totalMin, selectedCPs.size())
+            );
+        }
+
         for (CheckPoint cp : selectedCPs) {
             if (!cp.getTour().getTourId().equals(tour.getTourId())) {
                 throw new InvalidateDataException(

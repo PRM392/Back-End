@@ -35,5 +35,8 @@ public class TourResponse {
     @JsonProperty("minVisitPlaces")
     private Integer minVisitPlaces;
     
+    @JsonProperty("totalCustomPlaces")
+    private Integer totalCustomPlaces;
+    
     private String thumbnailUrl;
 }
