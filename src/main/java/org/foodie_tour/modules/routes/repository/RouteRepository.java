@@ -9,4 +9,5 @@ import java.util.List;
 public interface RouteRepository extends JpaRepository<Route, Long> {
     boolean existsByRouteName(String routeName);
     List<Route> findRouteByRouteStatus(RouteStatus routeStatus);
+    List<Route> findAllByTour_TourId(Long tourId);
 }

@@ -170,4 +170,11 @@ public class RouteServiceImpl implements RouteService {
         route.setRouteStatus(RouteStatus.DELETED);
         routeRepository.save(route);
     }
+
+    @Override
+    public List<RouteResponse> getRouteByTourId(Long tourId) {
+        return routeRepository.findAllByTour_TourId(tourId).stream()
+                .map(routeMapper::toResponse)
+                .toList();
+    }
 }

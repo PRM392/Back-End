@@ -44,6 +44,12 @@ public class RouteController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
+    @GetMapping("/tour/{tourId}")
+    public ResponseEntity<List<RouteResponse>> getRouteByTourId(@PathVariable Long tourId) {
+        List<RouteResponse> responses = routeService.getRouteByTourId(tourId);
+        return ResponseEntity.status(HttpStatus.OK).body(responses);
+    }
+
     @PutMapping("{id}")
     @PreAuthorize("hasRole('ADMIN') or hasAuthority('UPDATE_ROUTE')")
     public ResponseEntity<RouteResponse> updateRoute(
