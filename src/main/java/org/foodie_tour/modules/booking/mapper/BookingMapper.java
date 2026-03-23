@@ -29,7 +29,7 @@ public interface BookingMapper {
     @Mapping(target = "tourId", source = "tour.tourId")
     @Mapping(target = "tourName", source = "tour.tourName")
     @Mapping(target = "routeId", source = "route.routeId")
-    @Mapping(target = "departureTime", source = "schedule.departureAt")
+    @Mapping(target = "departureTime", source = "departureTime")
     @Mapping(target = "customerName", source = "customerName")
     @Mapping(target = "customerEmail", source = "email")
     @Mapping(target = "customerPhone", source = "phone")
