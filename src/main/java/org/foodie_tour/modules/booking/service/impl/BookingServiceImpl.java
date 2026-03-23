@@ -311,10 +311,18 @@ public class BookingServiceImpl implements BookingService {
             if (scheduleRepository.existsById(scheduleId)) {
                 Schedule newSchedule = scheduleRepository.getReferenceById(scheduleId);
                 booking.setSchedule(newSchedule);
+                booking.setDepartureTime(newSchedule.getDepartureAt());
             } else {
                 throw new ResourceNotFoundException("Lịch khởi hành không tồn tại");
             }
             relocateBooking.setRelocateRequestStatus(RelocateRequestStatus.APPROVED);
+            
+            BookingLog log = BookingLog.builder()
+                    .booking(booking)
+                    .description("Admin đã duyệt dời lịch. Lịch trình mới: " + newSchedule.getDepartureAt())
+                    .bookingStatus(booking.getBookingStatus())
+                    .build();
+            booking.getBookingLogs().add(log);
             bookingRepository.save(booking);
         } else {
             relocateBooking.setRelocateRequestStatus(RelocateRequestStatus.REJECTED);
