@@ -308,13 +308,12 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = findByBookingCode(bookingCode);
 
         if (request.isApproved()) {
-            if (scheduleRepository.existsById(scheduleId)) {
-                Schedule newSchedule = scheduleRepository.getReferenceById(scheduleId);
-                booking.setSchedule(newSchedule);
-                booking.setDepartureTime(newSchedule.getDepartureAt());
-            } else {
-                throw new ResourceNotFoundException("Lịch khởi hành không tồn tại");
-            }
+            Schedule newSchedule = scheduleRepository.findById(scheduleId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Lịch khởi hành không tồn tại"));
+            
+            booking.setSchedule(newSchedule);
+            booking.setDepartureTime(newSchedule.getDepartureAt());
+            
             relocateBooking.setRelocateRequestStatus(RelocateRequestStatus.APPROVED);
             
             BookingLog log = BookingLog.builder()
