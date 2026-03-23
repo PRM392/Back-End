@@ -310,15 +310,22 @@ public class BookingServiceImpl implements BookingService {
         if (request.isApproved()) {
             Schedule newSchedule = scheduleRepository.findById(scheduleId)
                     .orElseThrow(() -> new ResourceNotFoundException("Lịch khởi hành không tồn tại"));
-            
+
             booking.setSchedule(newSchedule);
             booking.setDepartureTime(newSchedule.getDepartureAt());
-            
+
+            // Cập nhật bookingStatus từ PENDING sang COMPLETED nếu đã thanh toán đủ
+            if (booking.getBookingStatus() == BookingStatus.PENDING 
+                    && booking.getRemainingAmount() == 0) {
+                booking.setBookingStatus(BookingStatus.COMPLETED);
+            }
+
             relocateBooking.setRelocateRequestStatus(RelocateRequestStatus.APPROVED);
-            
+
             BookingLog log = BookingLog.builder()
                     .booking(booking)
-                    .description("Admin đã duyệt dời lịch. Lịch trình mới: " + newSchedule.getDepartureAt())
+                    .description("Admin đã duyệt dời lịch. Lịch trình mới: " + newSchedule.getDepartureAt() 
+                            + ". Trạng thái: " + booking.getBookingStatus())
                     .bookingStatus(booking.getBookingStatus())
                     .build();
             booking.getBookingLogs().add(log);

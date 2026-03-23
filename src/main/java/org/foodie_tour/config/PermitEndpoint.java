@@ -24,13 +24,16 @@ public class PermitEndpoint {
             "/api/auth/login",
             "/api/booking",
             "/api/booking/cancel",
-            "/api/booking/*/vnpay-confirm"
+            "/api/booking/*/vnpay-confirm",
+            "/api/booking/{bookingCode}/relocate",
+            "/api/booking/relocate/verify"
     };
 
     public static String[] PUBLIC_GET_ENDPOINTS = {
             "/api/booking/all",                    // Admin xem tất cả booking
             "/api/booking/{bookingCode}",        // Xem chi tiết 1 booking
             "/api/booking/{bookingCode}/logs",   // Xem lịch sử booking
+            "/api/booking/relocate/all-request",  // Xem tất cả yêu cầu dời lịch
             "/api/routes",
             "/api/routes/{id}",
             "/api/schedules",
@@ -48,6 +51,7 @@ public class PermitEndpoint {
 
     public static String[] PUBLIC_PUT_ENDPOINTS = {
             "/api/booking/*/complete-payment",  // Admin xác nhận thanh toán
-            "/api/booking/*/approve-refund"     // Admin hoàn tiền
+            "/api/booking/*/approve-refund",     // Admin hoàn tiền
+            "/api/booking/relocate/process"      // Admin xử lý dời lịch
     };
 }
