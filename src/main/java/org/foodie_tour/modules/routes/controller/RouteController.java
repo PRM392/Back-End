@@ -24,7 +24,7 @@ public class RouteController {
     private final RouteService routeService;
 
     @PostMapping()
-    @PreAuthorize("hasAuthority('CREATE_ROUTE')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('CREATE_ROUTE')")
     public ResponseEntity<RouteResponse> createRoute(@RequestBody @Valid RouteRequest routeRequest) {
         RouteResponse response = routeService.createRoute(routeRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -45,7 +45,7 @@ public class RouteController {
     }
 
     @PutMapping("{id}")
-    @PreAuthorize("hasAuthority('UPDATE_ROUTE')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('UPDATE_ROUTE')")
     public ResponseEntity<RouteResponse> updateRoute(
             @PathVariable Long id,
             @RequestBody @Valid RouteRequest routeRequest) {

@@ -51,6 +51,6 @@ public class Route {
     @OneToMany(mappedBy = "route", fetch = FetchType.LAZY)
     private List<Schedule> schedules;
 
-    @OneToMany(mappedBy = "route", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "route", cascade = CascadeType.ALL)
     private List<RouteCheckpoint> routeCheckpoints;
 }

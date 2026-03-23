@@ -37,6 +37,6 @@ public interface RouteMapper {
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "routeName", ignore = true)
     @Mapping(target = "routeStatus", ignore = true)
-    @Mapping(target = "routeCheckpoints", source = "checkPointOrderRequests")
+    @Mapping(target = "routeCheckpoints", ignore = true)
     void updateEntity(RouteRequest routeRequest, @MappingTarget Route route);
 }

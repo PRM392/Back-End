@@ -94,6 +94,7 @@ public class RouteServiceImpl implements RouteService {
     }
 
     @Override
+    @Transactional
     public RouteResponse updateRouteById(Long routeId, RouteRequest routeRequest) {
         Route route = routeRepository.findById(routeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tuyến đường không tồn tại"));
@@ -105,9 +106,61 @@ public class RouteServiceImpl implements RouteService {
         route.setUpdatedAt(LocalDateTime.now());
         route.setTour(tour);
 
+        // Manual sync of checkpoints
+        List<RouteCheckpoint> existingCheckpoints = route.getRouteCheckpoints();
+        List<CheckPointOrderRequest> newOrders = routeRequest.getCheckPointOrderRequests();
+        List<RouteCheckpoint> updatedCheckpoints = new java.util.ArrayList<>();
+
+        if (newOrders != null) {
+            for (CheckPointOrderRequest orderReq : newOrders) {
+                RouteCheckpoint existingMatch = existingCheckpoints.stream()
+                        .filter(rcp -> rcp.getCheckPoint().getCheckpointId().equals(orderReq.getCheckpointId()))
+                        .findFirst()
+                        .orElse(null);
+
+                if (existingMatch != null) {
+                    existingMatch.setOrder(orderReq.getOrder());
+                    existingMatch.setStatus(RouteCheckPointStatus.ACTIVE);
+                    updatedCheckpoints.add(existingMatch);
+                } else {
+                    CheckPoint cp = checkPointRepository.findById(orderReq.getCheckpointId())
+                            .orElseThrow(() -> new ResourceNotFoundException("Địa điểm không tồn tại: " + orderReq.getCheckpointId()));
+
+                    RouteCheckpoint newRcp = RouteCheckpoint.builder()
+                            .route(route)
+                            .checkPoint(cp)
+                            .order(orderReq.getOrder())
+                            .status(RouteCheckPointStatus.ACTIVE)
+                            .build();
+                    updatedCheckpoints.add(newRcp);
+                }
+            }
+        }
+
+        // Mark removed ones as DELETED but keep them in the list (to avoid JPA deletion)
+        for (RouteCheckpoint oldRcp : existingCheckpoints) {
+            boolean stillPresent = updatedCheckpoints.stream()
+                    .anyMatch(rcp -> rcp.getRouteCheckpointId() != null && rcp.getRouteCheckpointId().equals(oldRcp.getRouteCheckpointId()));
+
+            if (!stillPresent) {
+                oldRcp.setStatus(RouteCheckPointStatus.DELETED);
+                updatedCheckpoints.add(oldRcp);
+            }
+        }
+
+        route.setRouteCheckpoints(updatedCheckpoints);
         routeRepository.save(route);
-        return routeMapper.toResponse(route);
+
+        // Return response with only ACTIVE checkpoints filtered
+        RouteResponse response = routeMapper.toResponse(route);
+        if (response.getRouteCheckpoints() != null) {
+            response.setRouteCheckpoints(response.getRouteCheckpoints().stream()
+                    .filter(rcp -> "ACTIVE".equals(rcp.getStatus()))
+                    .toList());
+        }
+        return response;
     }
+    
 
     @Override
     public void deleteRouteById(Long routeId) {

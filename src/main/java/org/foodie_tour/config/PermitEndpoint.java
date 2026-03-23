@@ -50,5 +50,4 @@ public class PermitEndpoint {
             "/api/booking/*/complete-payment",  // Admin xác nhận thanh toán
             "/api/booking/*/approve-refund"     // Admin hoàn tiền
     };
-
 }

@@ -67,6 +67,7 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new ResourceNotFoundException("Tài khoản không tồn tại"));
     }
 
+    @Transactional
     public LoginResponse login(LoginRequest request) {
         String input = request.getInput();
 
