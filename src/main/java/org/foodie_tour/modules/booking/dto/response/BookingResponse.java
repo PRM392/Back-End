@@ -3,6 +3,7 @@ package org.foodie_tour.modules.booking.dto.response;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.foodie_tour.modules.booking.enums.BookingStatus;
+import org.foodie_tour.modules.booking.enums.BookingType;
 import org.foodie_tour.modules.booking.enums.PaymentMethod;
 import org.foodie_tour.modules.booking.enums.RefundStatus;
 
@@ -54,4 +55,6 @@ public class BookingResponse {
     // Timestamps
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
+
+    BookingType bookingType;
 }

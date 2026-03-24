@@ -44,7 +44,7 @@ public class BookingController {
     }
 
     @GetMapping("/{bookingCode}")
-    public ResponseEntity<BookingResponse> getBookingById(@PathVariable String bookingCode) {
+    public ResponseEntity<BookingResponse> getBookingByCode(@PathVariable String bookingCode) {
         var result = bookingService.getBookingByCode(bookingCode);
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }

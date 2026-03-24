@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.foodie_tour.modules.booking.enums.BookingStatus;
+import org.foodie_tour.modules.booking.enums.BookingType;
 import org.foodie_tour.modules.booking.enums.PaymentMethod;
 import org.foodie_tour.modules.booking.enums.RefundStatus;
 import org.foodie_tour.modules.routes.entity.Route;
@@ -98,6 +99,10 @@ public class Booking {
     @Column(name = "payment_method")
     @Enumerated(EnumType.STRING)
     PaymentMethod paymentMethod;
+
+    @Column(name = "booking_type")
+    @Enumerated(EnumType.STRING)
+    BookingType bookingType;
 
     @Column(name = "is_deposit", nullable = true)
     Boolean deposit;

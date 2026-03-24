@@ -7,6 +7,7 @@ import org.foodie_tour.modules.booking.dto.request.CustomBookingRequest;
 import org.foodie_tour.modules.booking.dto.response.BookingResponse;
 import org.foodie_tour.modules.booking.entity.Booking;
 import org.foodie_tour.modules.booking.enums.BookingStatus;
+import org.foodie_tour.modules.booking.enums.BookingType;
 import org.foodie_tour.modules.booking.mapper.BookingMapper;
 import org.foodie_tour.modules.booking.repository.BookingRepository;
 import org.foodie_tour.modules.booking.service.CustomTourService;
@@ -30,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -67,18 +69,27 @@ public class CustomTourServiceImpl implements CustomTourService {
                 .orElseThrow(() -> new ResourceNotFoundException("Lịch trình không tồn tại"));
 
         Tour tour = schedule.getTour();
+        List<CheckPoint> unsortedCps = checkPointRepository.findAllById(request.getSelectedCheckpointIds());
 
-        List<CheckPoint> selectCps = checkPointRepository.findAllById(request.getSelectedCheckpointIds());
+        List<CheckPoint> selectCps = request.getSelectedCheckpointIds().stream()
+                .map(id -> unsortedCps.stream()
+                        .filter(cp -> cp.getCheckpointId().equals(id))
+                        .findFirst()
+                        .orElseThrow(() -> new ResourceNotFoundException("Checkpoint " + id + " không tồn tại")))
+                .collect(Collectors.toList());
         validateCustomConstraints(tour, selectCps);
 
-        Route customRoute = createNewCustomRoute(tour, selectCps, request.getCustomerName());
+        String bookingCode = "CB-" + System.currentTimeMillis();
+
+        Route customRoute = createNewCustomRoute(tour, selectCps, bookingCode);
 
         Booking booking = bookingMapper.toEntity(request);
         booking.setSchedule(schedule);
         booking.setTour(tour);
         booking.setRoute(customRoute);
-        booking.setBookingCode("CB-" + System.currentTimeMillis());
+        booking.setBookingCode(bookingCode);
         booking.setBookingStatus(BookingStatus.PENDING);
+        booking.setBookingType(BookingType.CUSTOM);
 
         Long total = (request.getAdultCount() * tour.getBasePriceAdult()) +
                 (request.getChildrenCount() * tour.getBasePriceChild());
@@ -95,7 +106,8 @@ public class CustomTourServiceImpl implements CustomTourService {
         return bookingMapper.toResponse(savedBooking);
     }
 
-    private Route createNewCustomRoute(Tour tour, List<CheckPoint> cps, String name) {
+    @Transactional
+    public Route createNewCustomRoute(Tour tour, List<CheckPoint> cps, String name) {
         Route route = new Route();
         route.setRouteName("Lộ trình của " + name);
         route.setTour(tour);

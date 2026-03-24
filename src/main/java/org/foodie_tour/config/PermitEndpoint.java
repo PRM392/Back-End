@@ -46,7 +46,8 @@ public class PermitEndpoint {
             "/api/guide/tracking/*/trail",
             "/api/guide/tracking/*/checkins",
             "/api/guide/tracking/*",
-            "/api/guide/tracking/active"
+            "/api/guide/tracking/active",
+            "/api/routes/tour/{tourId}"
     };
 
     public static String[] PUBLIC_PUT_ENDPOINTS = {

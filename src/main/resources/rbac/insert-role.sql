@@ -29,3 +29,23 @@ WHERE r.name = 'ADMIN'
   AND NOT EXISTS (
     SELECT 1 FROM public.employee e WHERE e.email = 'daoleo2048@gmail.com'
 );
+
+INSERT INTO public.employee (role_id, employee_name, email, password, status, created_at, updated_at)
+SELECT r.role_id, 'Tourguide', 'nguyenquangdao1408@gmail.com',
+       '$2a$10$IXBBliXi8Xs73uioBUnJIeeDECtPhi2nM6yUE8JWPYqSsEEu3cKbS',
+       'ACTIVE', NOW(), NOW()
+FROM public.role r
+WHERE r.name = 'TOURGUIDE'
+  AND NOT EXISTS (
+    SELECT 1 FROM public.employee e WHERE e.email = 'nguyenquangdao1408@gmail.com'
+);
+
+INSERT INTO public.employee (role_id, employee_name, email, password, status, created_at, updated_at)
+SELECT r.role_id, 'Dispatch', 'daonqse182848@fpt.edu.vn',
+       '$2a$10$IXBBliXi8Xs73uioBUnJIeeDECtPhi2nM6yUE8JWPYqSsEEu3cKbS',
+       'ACTIVE', NOW(), NOW()
+FROM public.role r
+WHERE r.name = 'DISPATCH'
+  AND NOT EXISTS (
+    SELECT 1 FROM public.employee e WHERE e.email = 'daonqse182848@fpt.edu.vn'
+);

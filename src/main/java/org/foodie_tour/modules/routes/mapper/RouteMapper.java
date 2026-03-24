@@ -30,6 +30,7 @@ public interface RouteMapper {
 
     @Mapping(target = "checkpointId", source = "checkPoint.checkpointId")
     @Mapping(target = "status", expression = "java(entity.getStatus() != null ? entity.getStatus().name() : null)")
+    @Mapping(target = "name", source = "checkPoint.locationName")
     RouteCheckpointResponse toRouteCheckPointResponse(RouteCheckpoint entity);
 
     @Mapping(target = "routeId", ignore = true)

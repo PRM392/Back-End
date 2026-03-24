@@ -22,10 +22,7 @@ import org.foodie_tour.modules.booking.dto.response.RelocateBookingResponse;
 import org.foodie_tour.modules.booking.entity.Booking;
 import org.foodie_tour.modules.booking.entity.BookingLog;
 import org.foodie_tour.modules.booking.entity.RelocateBooking;
-import org.foodie_tour.modules.booking.enums.BookingStatus;
-import org.foodie_tour.modules.booking.enums.PaymentMethod;
-import org.foodie_tour.modules.booking.enums.RefundStatus;
-import org.foodie_tour.modules.booking.enums.RelocateRequestStatus;
+import org.foodie_tour.modules.booking.enums.*;
 import org.foodie_tour.modules.booking.mapper.BookingLogMapper;
 import org.foodie_tour.modules.booking.mapper.BookingMapper;
 import org.foodie_tour.modules.booking.mapper.RelocateBookingMapper;
@@ -134,6 +131,7 @@ public class BookingServiceImpl implements BookingService {
         booking.setBookingStatus(BookingStatus.PENDING);
         booking.setRefundStatus(RefundStatus.INACTIVE);
         booking.setDeposit(request.isDeposit());
+        booking.setBookingType(BookingType.STANDARD);
 
         long adultPrice = tour.getBasePriceAdult() * request.getAdultCount();
         long childPrice = tour.getBasePriceChild() * request.getChildrenCount();
@@ -224,10 +222,10 @@ public class BookingServiceImpl implements BookingService {
         int timeAllow = 8;
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime startTime = booking.getSchedule().getDepartureAt();
-        if (!now.plusHours(timeAllow).isBefore(startTime)) {
-            String error = String.format("Chỉ được phép dời lịch trình trước khi khởi hành ít nhất %s giờ", timeAllow);
-            throw new InvalidateDataException(error);
-        }
+//        if (!now.plusHours(timeAllow).isBefore(startTime)) {
+//            String error = String.format("Chỉ được phép dời lịch trình trước khi khởi hành ít nhất %s giờ", timeAllow);
+//            throw new InvalidateDataException(error);
+//        }
 
         // Generate otp
         String otp;
